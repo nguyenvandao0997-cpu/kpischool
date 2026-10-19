@@ -57,7 +57,7 @@ td{border:1px solid #e2e8f0;padding:5px;vertical-align:middle}
 <div id="app" class="hide flex flex-col h-full">
  <header class="bg-sky-900 text-white shadow-lg flex-shrink-0">
   <div class="px-4 py-3 flex justify-between items-center border-b border-sky-800">
-   <div><h1 class="text-lg font-black text-sky-200">KPI SCHOOL <span class="text-white text-sm">| Đắk Song</span></h1><p class="text-[11px] text-sky-300 uppercase font-semibold">Hệ thống Đánh giá Hiệu suất Chuyên nghiệp</p></div>
+   <div><h1 class="text-lg font-black text-sky-200">KPI SCHOOL <span class="text-white text-sm">| Đắk Song</span></h1><p class="text-[11px] text-sky-300 uppercase font-semibold">Hệ thống Đánh giá Hiệu suất Mới</p></div>
    <div class="flex items-center gap-3">
     <select id="period-sel" onchange="setPeriod(this.value)" class="bg-sky-800 text-white text-sm font-bold rounded-lg px-2 py-2 max-w-[11rem]"></select>
     <div class="text-right hidden sm:block"><p class="text-sm font-bold" id="u-name"></p><p class="text-xs text-emerald-300" id="u-role"></p></div>
@@ -228,9 +228,9 @@ td{border:1px solid #e2e8f0;padding:5px;vertical-align:middle}
 </div>
 
 <script>
-/* ================= CẤU HÌNH VÀ HẰNG SỐ ================= */
+/* ================= CẤU HÌNH VÀ HẰNG SỐ (TÁCH BIỆT HOÀN TOÀN Ở NHÁNH kpi_school_new) ================= */
 const firebaseConfig={apiKey:"AIzaSyBQ674rvyTsjbPBNMXscVE1LFY3uo1Neaw",authDomain:"class-rank-noi-tru-dak-song.firebaseapp.com",projectId:"class-rank-noi-tru-dak-song",storageBucket:"class-rank-noi-tru-dak-song.firebasestorage.app",messagingSenderId:"1087793103334",appId:"1:1087793103334:web:0c813d1d241f03529d1627"};
-const BASE=['artifacts','kpi_school_data','public','data'];
+const BASE=['artifacts','kpi_school_new','public','data'];
 const GAS_API_URL="https://script.google.com/macros/s/AKfycbwXSEJWFSfcpNhYFvLqd5AoTTKdpLKT9ulE_sPh5oyHq7CalRbxbYo2q2zyazwDuQU69w/exec";
 const ROLES={gv:'Giáo viên/Nhân viên',tt:'Tổ trưởng',bgh:'Ban Giám hiệu',tk:'Thư ký/Văn thư',admin:'Quản trị viên'};
 const PERMS={assign:'Giao nhiệm vụ',grade:'Chấm/duyệt cấp dưới',reports:'Xem Phụ lục III'};
@@ -653,7 +653,7 @@ async function deleteAxis(i){
 
 async function addSystemAxis(){
  const val = $('new-axis-name').value.trim();
- if(!val) return toast('Vولượng nhập tên trục mới!','warning');
+ if(!val) return toast('Vui lòng nhập tên trục mới!','warning');
  AXES.push(val);
  await dref('config','axes').set({list: AXES});
  $('new-axis-name').value = '';
