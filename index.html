@@ -84,7 +84,7 @@ tbody tr:hover td{background:#f8fbff}
     <label class="flex items-center gap-2 text-sm font-semibold text-slate-600"><input id="l-rem" type="checkbox" class="w-4 h-4 accent-sky-600"> Nhớ tài khoản & mật khẩu</label>
     <button id="l-btn" class="b b1 w-full !py-3.5 !text-sm shadow-lg shadow-sky-500/30"><i class="fas fa-right-to-bracket"></i> ĐĂNG NHẬP HỆ THỐNG</button>
    </form>
-   <p class="text-[11px] text-slate-400 text-center mt-8">© 2026 Trường PTDTNT THCS & THPT Đắk Song</p>
+   <p class="text-[11px] text-slate-400 text-center mt-8">© 2026 Nguyễn Văn Đạo Vntech PTDTNT THCS và THPT Đăk Song</p>
   </div>
  </div>
 </div>
@@ -94,7 +94,7 @@ tbody tr:hover td{background:#f8fbff}
  <header class="hdr text-white shadow-xl flex-shrink-0">
   <div class="px-4 sm:px-6 py-3 flex justify-between items-center border-b border-white/10">
    <div class="flex items-center gap-3"><img src="https://i.postimg.cc/YqTBpm7v/LOGO-NOI-TRU.png" class="w-10 h-10 rounded-full ring-2 ring-cyan-300/50" alt="">
-    <div><h1 class="text-lg font-black tracking-wide">KPI <span class="text-cyan-300">SCHOOL</span> <span class="text-sm font-semibold text-sky-200 hidden sm:inline">| Đắk Song</span></h1><p class="text-[10px] text-sky-300 uppercase font-bold tracking-widest flex items-center gap-2"><span class="live"></span> Chuyển đổi số · Realtime</p></div></div>
+    <div><h1 class="text-lg font-black tracking-wide">KPI <span class="text-cyan-300">SCHOOL</span> <span class="text-sm font-semibold text-sky-200 hidden sm:inline">| Nội trú Đắk Song</span></h1><p class="text-[10px] text-sky-300 uppercase font-bold tracking-widest flex items-center gap-2"><span class="live"></span> Chuyển đổi số · Realtime</p></div></div>
    <div class="flex items-center gap-3">
     <select id="period-sel" onchange="setPeriod(this.value)" class="bg-white/10 border border-white/20 text-white text-sm font-bold rounded-lg px-2 py-2 max-w-[11rem]"></select>
     <div class="text-right hidden sm:block"><p class="text-sm font-bold" id="u-name"></p><p class="text-xs text-emerald-300" id="u-role"></p></div>
@@ -277,16 +277,16 @@ const kdoc=uid=>dref('kpi_docs',cur.id+'~'+uid);
 const kset=(uid,o)=>kdoc(uid).set({status:docInfo.status||'DRAFT',...o,periodId:cur.id,uid},{merge:true});
 const can=p=>!!me&&me.role!=='admin'&&!!(perms[me.role]||{})[p];
 const log=(a,d)=>me&&cref('audit_logs').add({at:Date.now(),by:me.id,byName:me.fullName,target:viewUid||null,action:a,detail:d||''}).catch(()=>{});
-let periods=[],cur={id:'',name:'',status:'locked'},perms=DEFPERMS,rawDocs=[],me=null,users=[],depts=[],viewUid=null,viewUser=null,tasks=[],docInfo={},allDocs=[],unsubs=[],mode='self',started=false;
+let typedLogin=null,periods=[],cur={id:'',name:'',status:'locked'},perms=DEFPERMS,rawDocs=[],me=null,users=[],depts=[],viewUid=null,viewUser=null,tasks=[],docInfo={},allDocs=[],unsubs=[],mode='self',started=false;
 const newDoc=()=>({status:'DRAFT',generalScore:C().generalRatio,extraDeduct:0,note:'',tc30Data:[]});
 
 /* ===== ĐĂNG NHẬP ===== */
 const toEmail=s=>{s=s.trim().toLowerCase();return s==='admin'?ADMIN_EMAIL:(s.includes('@')?s:s+DOMAIN)};
-const errMsg=e=>({'auth/invalid-credential':'Sai tài khoản hoặc mật khẩu.','auth/wrong-password':'Sai mật khẩu.','auth/user-not-found':'Tài khoản không tồn tại.','auth/invalid-email':'Tài khoản không hợp lệ.','auth/too-many-requests':'Thử sai quá nhiều lần, vui lòng đợi vài phút.','auth/network-request-failed':'Lỗi mạng, kiểm tra kết nối.','auth/operation-not-allowed':'Chưa bật Email/Password trong Firebase Authentication.','auth/unauthorized-domain':'Tên miền chưa thêm vào Authorized domains của Firebase.','auth/email-already-in-use':'Tài khoản đã tồn tại.','auth/weak-password':'Mật khẩu phải từ 6 ký tự.'}[e.code]||e.message||'Lỗi không xác định');
+const errMsg=e=>({'auth/invalid-credential':'Sai tài khoản hoặc mật khẩu.','auth/wrong-password':'Sai mật khẩu.','auth/user-not-found':'Tài khoản không tồn tại.','auth/invalid-email':'Tài khoản không hợp lệ.','auth/too-many-requests':'Thử sai quá nhiều lần, vui lòng đợi vài phút.','auth/network-request-failed':'Lỗi mạng, kiểm tra kết nối.','auth/operation-not-allowed':'Chưa bật Email/Password trong Firebase Authentication.','auth/unauthorized-domain':'Tên miền chưa thêm vào Authorized domains của Firebase.','auth/email-already-in-use':'Tài khoản đã tồn tại.','auth/weak-password':'Mật khẩu phải từ 6 ký tự.','auth/requires-recent-login':'Vui lòng đăng xuất, đăng nhập lại rồi thử lại.'}[e.code]||e.message||'Lỗi không xác định');
 function togglePass(){const i=$('l-pass'),s=i.type==='password';i.type=s?'text':'password';$('eye').className='fas fa-eye'+(s?'-slash':'')}
 try{const r=JSON.parse(localStorage.getItem('kpi_rem')||'null');if(r){$('l-user').value=r.u;$('l-pass').value=r.p;$('l-rem').checked=true}}catch(e){}
 async function handleLogin(e){
- e.preventDefault();const raw=$('l-user').value.trim(),pass=$('l-pass').value,email=toEmail(raw),btn=$('l-btn');
+ e.preventDefault();const raw=$('l-user').value.trim(),pass=$('l-pass').value,btn=$('l-btn');typedLogin=raw.toLowerCase().replace(DOMAIN,'');let email=toEmail(raw);try{const g=await dref('logins',typedLogin).get();if(g.exists)email=g.data().authEmail}catch(x){}
  btn.disabled=true;const l=toast('Đang xác thực...','info',true);
  try{
   try{await auth.signInWithEmailAndPassword(email,pass)}
@@ -306,6 +306,8 @@ auth.onAuthStateChanged(async u=>{
    await dref('users','admin1').set({fullName:'Quản trị viên Hệ thống',jobTitle:'Quản trị viên',role:'admin',dept:'Ban Giám Hiệu',email},{merge:true});
    m=await dref('emails',email).get();
   }
+  const ud=await dref('users',m.data().userId).get(),lg=ud.exists&&ud.data().login;
+  if(typedLogin&&lg&&typedLogin!==lg){toast('Tài khoản này đã được đổi thành “'+lg+'”. Hãy đăng nhập bằng tên mới.','error');await auth.signOut();return}
   start(m.data().userId,m.data().role);
  }catch(e){toast('Lỗi hệ thống: '+e.message+' (kiểm tra Firestore Rules)','error');auth.signOut()}
 });
@@ -313,7 +315,7 @@ function start(uid,role){
  if(started)return;started=true;const adm=role==='admin';
  const er=e=>toast('Lỗi đọc dữ liệu: '+e.message,'error');
  cref('users').onSnapshot(s=>{users=s.docs.map(d=>({...d.data(),id:d.id}));const u=users.find(x=>x.id===uid);
-  if(u){const first=!me;me=u;if(first)enterApp();else if(!$('v-admin').classList.contains('hide'))renderUsers()}},er);
+  if(u){const first=!me;me=u;if(first)enterApp();renderAcct();if(!first&&!$('v-admin').classList.contains('hide'))renderUsers()}},er);
  dref('config','departments').onSnapshot(s=>{if(s.exists)depts=s.data().list||[];else{depts=["Ban Giám Hiệu","Tổ Khoa học Xã hội","Tổ Khoa học Tự nhiên","Tổ Văn phòng"];if(adm)dref('config','departments').set({list:depts})}renderDepts()},er);
  dref('config','axes').onSnapshot(s=>{if(s.exists)AXES=s.data().list||DEFAULT_AXES;else if(adm)dref('config','axes').set({list:DEFAULT_AXES});renderAxes();if(me){fillRegister();render()}},er);
  dref('config','roles').onSnapshot(s=>{perms=s.exists?{...DEFPERMS,...s.data().perms}:DEFPERMS;if(me){buildNav();$('t-'+mode)?.classList.add('on');renderPerms()}},er);
@@ -608,7 +610,7 @@ async function loadAudit(){const b=$('audit-body');if(!b)return;try{const s=awai
  b.innerHTML=s.docs.map(d=>{const x=d.data();return`<tr class="border-b"><td class="p-1 whitespace-nowrap">${new Date(x.at).toLocaleString('vi-VN')}</td><td class="p-1 font-bold">${esc(x.byName)}</td><td class="p-1">${esc(x.action)}</td><td class="p-1 text-slate-500">${esc(x.detail)}</td></tr>`}).join('')||'<tr><td class="p-2 text-slate-400">Chưa có thao tác.</td></tr>'}catch(e){b.innerHTML='<tr><td class="p-2 text-red-500">Lỗi nhật ký</td></tr>'}}
 function renderUsers(){
  $('e-manager').innerHTML='<option value="">-- Người duyệt trực tiếp (bỏ trống nếu không có) --</option>'+users.filter(u=>['tt','bgh','admin'].includes(u.role)).map(m=>`<option value="${m.id}">${esc(m.fullName)} (${esc(ROLES[m.role])})</option>`).join('');
- $('user-body').innerHTML=users.map(u=>{const m=users.find(x=>x.id===u.managerId);return`<tr><td class="p-2 font-bold">${esc(u.fullName)}<span class="block text-xs text-slate-500">${esc(u.jobTitle||'')}</span></td><td class="p-2 font-mono text-xs">${esc((u.email||'').replace(DOMAIN,''))}</td><td class="p-2 text-xs">${esc(ROLES[u.role]||u.role)} · ${esc(u.dept||'')}<div class="text-sky-700 font-bold">Duyệt bởi: ${m?esc(m.fullName):'---'}</div></td><td class="p-2 text-center whitespace-nowrap"><button onclick="editUser('${u.id}')" class="text-blue-500 p-2"><i class="fas fa-pen-to-square"></i></button><button onclick="delUser('${u.id}')" class="text-red-500 p-2"><i class="fas fa-trash"></i></button></td></tr>`}).join('');
+ $('user-body').innerHTML=users.map(u=>{const m=users.find(x=>x.id===u.managerId);return`<tr><td class="p-2 font-bold">${esc(u.fullName)}<span class="block text-xs text-slate-500">${esc(u.jobTitle||'')}</span></td><td class="p-2 font-mono text-xs">${esc(u.login||(u.email||'').replace(DOMAIN,''))}</td><td class="p-2 text-xs">${esc(ROLES[u.role]||u.role)} · ${esc(u.dept||'')}<div class="text-sky-700 font-bold">Duyệt bởi: ${m?esc(m.fullName):'---'}</div></td><td class="p-2 text-center whitespace-nowrap"><button onclick="editUser('${u.id}')" class="text-blue-500 p-2"><i class="fas fa-pen-to-square"></i></button><button onclick="delUser('${u.id}')" class="text-red-500 p-2"><i class="fas fa-trash"></i></button></td></tr>`}).join('');
 }
 function resetUserForm(){$('user-form').reset();$('e-id').value='';$('e-email').readOnly=false}
 async function saveUser(e){
@@ -632,7 +634,38 @@ function editUser(id){const u=users.find(x=>x.id===id);if(!u)return;
 async function delUser(id){
  if(id===me.id)return toast('Không thể xóa chính mình!','warning');
  const u=users.find(x=>x.id===id);if(!u||!confirm('Xóa người dùng này? (Tài khoản đăng nhập vẫn còn trong Firebase Authentication nhưng sẽ không vào được hệ thống)'))return;
- try{if(u.email)await dref('emails',u.email.toLowerCase()).delete();await dref('users',id).delete();log('Xóa tài khoản',u.fullName)}catch(e){toast('Lỗi ('+(e.code||'')+'): '+e.message,'error')}
+ try{if(u.email)await dref('emails',u.email.toLowerCase()).delete();if(u.login)await dref('logins',u.login).delete().catch(()=>{});await dref('users',id).delete();log('Xóa tài khoản',u.fullName)}catch(e){toast('Lỗi ('+(e.code||'')+'): '+e.message,'error')}
+}
+
+/* ===== ĐỔI TÀI KHOẢN & MẬT KHẨU CỦA CHÍNH MÌNH ===== */
+const acctName=()=>me?.login||(me?.email||'').replace(DOMAIN,'');
+const pwAttr='type="password" data-pw required class="ti mt-1"';
+const acctHtml=()=>`<div class="card p-6 space-y-4 ${me.role==='admin'?'':'mt-5'}"><h2 class="sec"><i class="fas fa-key"></i> Tài khoản & mật khẩu của tôi</h2>
+<p class="text-sm text-slate-500">Tài khoản đăng nhập hiện tại: <b class="text-slate-900">${esc(acctName())}</b>. Hãy chọn tên dễ nhớ: chữ thường không dấu, số, dấu . _ - (3 đến 30 ký tự).</p>
+<form onsubmit="changeLogin(event)" class="grid sm:grid-cols-3 gap-3 items-end p-4 bg-slate-50 rounded-xl"><label class="text-sm font-bold">Tài khoản mới<input name="nl" required maxlength="30" autocomplete="off" class="ti mt-1" placeholder="VD: dao.nv"></label><label class="text-sm font-bold">Mật khẩu hiện tại<input name="op" ${pwAttr} autocomplete="current-password"></label><button class="b b1"><i class="fas fa-user-pen"></i> Đổi tài khoản</button></form>
+<form onsubmit="changePass(event)" class="grid sm:grid-cols-4 gap-3 items-end p-4 bg-slate-50 rounded-xl"><label class="text-sm font-bold">Mật khẩu hiện tại<input name="op" ${pwAttr} autocomplete="current-password"></label><label class="text-sm font-bold">Mật khẩu mới (≥ 6 ký tự)<input name="np" ${pwAttr} autocomplete="new-password"></label><label class="text-sm font-bold">Nhập lại mật khẩu mới<input name="np2" ${pwAttr} autocomplete="new-password"></label><button class="b b3"><i class="fas fa-lock"></i> Đổi mật khẩu</button><label class="sm:col-span-4 flex items-center gap-2 text-xs font-semibold"><input type="checkbox" onchange="this.form.querySelectorAll('input[data-pw]').forEach(i=>i.type=this.checked?'text':'password')"> Hiện mật khẩu đang gõ</label></form></div>`;
+function renderAcct(){if(!me)return;[['v-profile',0],['v-admin',1]].forEach(([id,top])=>{const sec=$(id);let b=sec.querySelector(':scope>.acct-box');if(!b){b=document.createElement('div');b.className='acct-box';top?sec.prepend(b):sec.appendChild(b)}if(!b.contains(document.activeElement))b.innerHTML=acctHtml()})}
+async function reauth(pw){const u=auth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,pw));return u}
+async function changePass(e){
+ e.preventDefault();const f=e.target.elements,op=f.op.value,np=f.np.value;
+ if(np.length<6)return toast('Mật khẩu mới phải từ 6 ký tự!','warning');
+ if(np!==f.np2.value)return toast('Hai lần nhập mật khẩu mới không khớp!','warning');
+ if(np===op)return toast('Mật khẩu mới phải khác mật khẩu cũ!','warning');
+ try{const u=await reauth(op);await u.updatePassword(np);e.target.reset();try{localStorage.removeItem('kpi_rem')}catch(x){}log('Đổi mật khẩu','');toast('Đã đổi mật khẩu! Lần sau hãy đăng nhập bằng mật khẩu mới.')}catch(x){toast(errMsg(x),'error')}
+}
+async function changeLogin(e){
+ e.preventDefault();const f=e.target.elements,nl=f.nl.value.trim().toLowerCase();
+ if(!/^[a-z0-9._-]{3,30}$/.test(nl))return toast('Tài khoản 3–30 ký tự: chữ thường không dấu, số, dấu . _ -','warning');
+ if(nl===acctName())return toast('Tài khoản mới trùng tài khoản hiện tại!','warning');
+ try{
+  const u=await reauth(f.op.value);
+  const taken=(nl==='admin'&&u.email!==ADMIN_EMAIL)||users.some(x=>x.id!==me.id&&((x.email||'').toLowerCase()===nl+DOMAIN||x.login===nl))||(await dref('logins',nl).get()).exists;
+  if(taken)return toast('Tài khoản này đã có người dùng, hãy chọn tên khác!','error');
+  const old=me.login,b=db.batch();
+  b.set(dref('logins',nl),{authEmail:u.email,userId:me.id});b.update(dref('users',me.id),{login:nl});if(old)b.delete(dref('logins',old));
+  await b.commit();e.target.reset();try{localStorage.removeItem('kpi_rem')}catch(x){}
+  log('Đổi tài khoản',nl);toast('Đã đổi tài khoản thành: '+nl+'. Lần sau đăng nhập bằng tên này.');
+ }catch(x){toast(errMsg(x),'error')}
 }
 </script>
 </body>
