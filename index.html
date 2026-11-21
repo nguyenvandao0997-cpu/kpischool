@@ -46,7 +46,7 @@ tbody tr:hover td{background:#f8fbff}
 #toasts{position:fixed;bottom:64px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
 .toast{padding:11px 18px;border-radius:12px;color:#fff;font-weight:600;font-size:14px;box-shadow:0 10px 25px -8px rgba(0,0,0,.35)}
 .hide{display:none!important}
-</style>
+#period-sel option{background:#fff;color:#0f172a;font-weight:700}#period-sel option:checked{background:#fde68a;color:#0f172a}</style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 <div id="toasts"></div>
@@ -96,7 +96,7 @@ tbody tr:hover td{background:#f8fbff}
    <div class="flex items-center gap-3"><img src="https://i.postimg.cc/YqTBpm7v/LOGO-NOI-TRU.png" class="w-10 h-10 rounded-full ring-2 ring-cyan-300/50" alt="">
     <div><h1 class="text-lg font-black tracking-wide">KPI <span class="text-cyan-300">SCHOOL</span> <span class="text-sm font-semibold text-sky-200 hidden sm:inline">| Đắk Song</span></h1><p class="text-[10px] text-sky-300 uppercase font-bold tracking-widest flex items-center gap-2"><span class="live"></span> Chuyển đổi số · Realtime</p></div></div>
    <div class="flex items-center gap-3">
-    <select id="period-sel" onchange="setPeriod(this.value)" class="bg-white/10 border border-white/20 text-white text-sm font-bold rounded-lg px-2 py-2 max-w-[11rem]"></select>
+    <select id="period-sel" onchange="setPeriod(this.value)" class="bg-amber-300 hover:bg-amber-200 border-2 border-amber-400 text-slate-900 text-sm font-black rounded-lg px-2 py-2 max-w-[13rem] shadow cursor-pointer" title="Chọn kỳ đánh giá"></select>
     <div class="text-right hidden sm:block"><p class="text-sm font-bold" id="u-name"></p><p class="text-xs text-emerald-300" id="u-role"></p></div>
     <button onclick="logout()" class="w-10 h-10 bg-white/10 hover:bg-red-600 rounded-lg" title="Đăng xuất"><i class="fas fa-power-off"></i></button>
    </div>
@@ -234,7 +234,7 @@ tbody tr:hover td{background:#f8fbff}
  <footer class="hdr text-white py-2 px-4 text-center flex-shrink-0 text-xs font-semibold space-y-0.5">
   <div>TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG - KỶ CƯƠNG - NỀN NẾP - DẠY TỐT - HỌC TỐT</div>
   <div class="text-[11px] text-sky-200">Thôn 5 - xã Đức An - tỉnh Lâm Đồng</div>
-  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 4.3 (21/11/2026)</div>
+  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 4.4 (21/11/2026)</div>
  </footer>
 </div>
 
