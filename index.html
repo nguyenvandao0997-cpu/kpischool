@@ -81,7 +81,7 @@ tbody tr:hover td{background:#f8fbff}
     <div><label class="text-xs font-bold text-slate-700">Mật khẩu</label>
      <div class="relative mt-1"><i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i><input id="l-pass" name="password" type="password" required autocomplete="current-password" class="ti !py-3 !pl-10 !pr-11" placeholder="Nhập mật khẩu">
      <button type="button" onclick="togglePass()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-sky-600" title="Hiện/ẩn mật khẩu"><i id="eye" class="fas fa-eye"></i></button></div></div>
-    <label class="flex items-center gap-2 text-sm font-semibold text-slate-600"><input id="l-rem" type="checkbox" class="w-4 h-4 accent-sky-600"> Nhớ tài khoản & mật khẩu</label>
+    <label class="flex items-center gap-2 text-sm font-semibold text-slate-600"><input id="l-rem" type="checkbox" class="w-4 h-4 accent-sky-600"> Nhớ tài khoản</label>
     <button id="l-btn" class="b b1 w-full !py-3.5 !text-sm shadow-lg shadow-sky-500/30"><i class="fas fa-right-to-bracket"></i> ĐĂNG NHẬP HỆ THỐNG</button>
    </form>
    <p class="text-[11px] text-slate-400 text-center mt-8">© 2026 Trường PTDTNT THCS & THPT Đắk Song</p>
@@ -163,7 +163,8 @@ tbody tr:hover td{background:#f8fbff}
       </div>
      </div>
      <label class="text-sm font-bold block">Sản phẩm nổi trội / vượt mức (bắt buộc nếu đề xuất HTXS)<textarea id="s-note" rows="3" class="ti mt-1" onchange="saveNote(this.value)"></textarea></label>
-     <div class="grid grid-cols-2 gap-2"><button onclick="previewDoc()" class="b b1"><i class="fas fa-eye"></i> Xem trước Phụ lục II</button><button onclick="downloadDoc()" class="b b2"><i class="fas fa-file-word"></i> Tải về (.doc)</button></div>
+     <div id="s-quarters" class="hide p-3 rounded-xl bg-slate-50 border"></div>
+     <div class="grid grid-cols-2 gap-2"><button onclick="previewDoc()" class="b b1"><i class="fas fa-eye"></i> Xem trước Phụ lục II</button><button onclick="downloadDoc()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục II (.doc)</button><button onclick="previewTc()" class="b b5"><i class="fas fa-eye"></i> Xem trước PL5/PL8</button><button id="btn-tc" onclick="downloadTc()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục 5 (.doc)</button></div>
     </div>
     <div class="card p-6 flex flex-col lg:col-span-2">
      <p class="text-[11px] font-bold text-slate-400 uppercase text-center tracking-widest">Mức xếp loại tự đề xuất</p>
@@ -191,8 +192,8 @@ tbody tr:hover td{background:#f8fbff}
    <div class="card p-6"><h2 class="sec mb-3"><i class="fas fa-diagram-project"></i> TRỤC NHIỆM VỤ TOÀN HỆ THỐNG</h2>
     <div class="flex gap-2 mb-3"><input id="new-axis-name" class="ti" placeholder="Tên trục mới (VD: TRỤC VII - ...)"><button onclick="addAxis()" class="b b1">Thêm trục</button></div><div id="axes-list" class="space-y-2"></div></div>
    <div class="card p-6"><h2 class="sec mb-3"><i class="fas fa-calendar-check"></i> KỲ ĐÁNH GIÁ (QUÝ, NĂM)</h2>
-    <form onsubmit="addPeriod(event)" class="grid md:grid-cols-4 gap-2 bg-slate-50 p-3 rounded-xl mb-3">
-     <input id="pe-name" required class="ti" placeholder="Tên kỳ (VD: Quý IV năm 2026)">
+    <form onsubmit="addPeriod(event)" class="grid md:grid-cols-5 gap-2 bg-slate-50 p-3 rounded-xl mb-3">
+     <input id="pe-name" required class="ti" placeholder="Tên kỳ (VD: Quý IV năm 2026)"><select id="pe-type" class="ti"><option value="quarter">Kỳ Quý</option><option value="year">Kỳ Năm</option></select>
      <label class="text-xs font-bold">Ngày chốt<input id="pe-cutoff" type="date" required class="ti"></label>
      <label class="text-xs font-bold">Hạn nộp<input id="pe-due" type="date" class="ti"></label>
      <button class="b b4 self-end">Tạo kỳ mới</button></form>
@@ -251,6 +252,58 @@ const CFG={kpiRatio:70,generalRatio:30,errorDeduct:0.05,lateDeduct:0.05,exceedTh
 const DEFAULT_AXES=["TRỤC I - Giảng dạy, kiểm tra đánh giá, hồ sơ dữ liệu","TRỤC II - Chất lượng học sinh (phụ đạo, bồi dưỡng, ôn thi)","TRỤC III - Sinh hoạt chuyên môn, chuyên đề, STEM/KHKT","TRỤC IV - Công tác chủ nhiệm lớp","TRỤC V - Tư vấn học đường, quản lý nội trú, văn hóa","TRỤC VI - Chuyển đổi số, sáng kiến, hoạt động giáo dục, QP-AN"];
 let AXES=[...DEFAULT_AXES];
 const CAT=[[0,"Thực hiện đầy đủ chương trình, kế hoạch giáo dục môn học",1],[0,"Xây dựng và thực hiện kế hoạch bài dạy; chuẩn bị học liệu, thiết bị",1],[0,"Đổi mới phương pháp dạy học, tổ chức hoạt động học tích cực",2],[0,"Kiểm tra, đánh giá; xây dựng ma trận, đặc tả, đề, đáp án",2],[0,"Nhập điểm, nhận xét, cập nhật VNEDU, học bạ số, hồ sơ điện tử",1],[1,"Khảo sát, phân tích, phân loại học sinh theo kết quả học tập",2],[1,"Phụ đạo học sinh chưa đạt/yếu",3],[1,"Bồi dưỡng học sinh giỏi",3],[1,"Xây dựng và thực hiện giải pháp nâng cao chất lượng môn/lớp",2],[2,"Tham gia sinh hoạt tổ/nhóm, nghiên cứu bài học, dự giờ",1],[2,"Xây dựng/thực hiện chuyên đề cấp tổ",2],[2,"Hướng dẫn học sinh làm sản phẩm STEM, dự án KHKT",3],[3,"Xây dựng và thực hiện kế hoạch chủ nhiệm; quản lý hồ sơ lớp",2],[3,"Theo dõi học tập, rèn luyện, chuyên cần; phối hợp gia đình",2],[3,"Sinh hoạt lớp định hướng HĐTNHN, giáo dục kỹ năng, nề nếp",2],[4,"Trực/quản lý học sinh nội trú theo lịch; theo dõi nề nếp",2],[4,"Tư vấn, hỗ trợ học sinh theo kế hoạch Tổ tư vấn",3],[4,"Tổ chức hoạt động giáo dục kỹ năng sống, văn hóa dân tộc",2],[5,"Báo cáo định kỳ, cập nhật kết quả nhiệm vụ, cung cấp minh chứng KPI",1],[5,"Ứng dụng AI, công nghệ số trong dạy học, học liệu số",2],[5,"Tuyên truyền phòng chống bạo lực học đường, ma túy, tệ nạn xã hội",2],[5,"Thực hiện nhiệm vụ phát sinh do Hiệu trưởng/BGH/Tổ trưởng giao",1]];
+
+/* Khung tiêu chí chung theo Công văn 6265/SGDĐT-TCCB:
+   - Giáo viên, nhân viên: Phụ lục 5 Quy định 255-QĐ/TU (30 điểm)
+   - Hiệu trưởng, Phó Hiệu trưởng: Phụ lục 8 Hướng dẫn 01-HD/TU (mục I 15 + mục II 15) */
+const TC5=[
+ ['h','1','Về chính trị, phẩm chất đạo đức và ý thức tổ chức kỷ luật',10],
+ ['i','p5a','a) Có quan điểm, bản lĩnh chính trị vững vàng; kiên định lập trường; không dao động trước mọi khó khăn, thách thức',1],
+ ['i','p5b','b) Thực hiện nghiêm nguyên tắc tổ chức, hoạt động của Đảng; chấp hành đường lối, chủ trương, chính sách, pháp luật; kỷ luật phát ngôn, bảo vệ bí mật nhà nước',1],
+ ['i','p5c','c) Có ý thức nghiên cứu, học tập, vận dụng chủ nghĩa Mác - Lênin, tư tưởng Hồ Chí Minh, nghị quyết, chỉ thị của Đảng',1],
+ ['i','p5d','d) Giữ gìn phẩm chất đạo đức, lối sống; tham gia đấu tranh phòng, chống tham nhũng, lãng phí, tiêu cực; không vi phạm những điều đảng viên không được làm',1],
+ ['i','p5dd','đ) Không tham ô, tham nhũng, tiêu cực, quan liêu, hách dịch, cửa quyền, vụ lợi',1],
+ ['i','p5e','e) Có ý thức tổ chức kỷ luật, tinh thần trách nhiệm; chấp hành sự phân công; thực hiện quy định, quy chế, nội quy cơ quan',1],
+ ['i','p5g','g) Thực hiện việc kê khai và công khai tài sản, thu nhập theo quy định',1],
+ ['i','p5h','h) Báo cáo đầy đủ, trung thực, cung cấp thông tin chính xác, khách quan với cấp trên khi được yêu cầu',1],
+ ['i','p5i','i) Giữ gìn đoàn kết nội bộ; quan hệ tốt với đồng nghiệp; tích cực tham gia xây dựng tổ chức đảng, đoàn thể, phong trào tập thể',1],
+ ['i','p5k','k) Gần gũi, sâu sát với cơ sở; giữ mối liên hệ với cấp ủy và Nhân dân nơi cư trú',1],
+ ['h','2','Năng lực chuyên môn, nghiệp vụ; khả năng đáp ứng yêu cầu nhiệm vụ; thái độ công tác; tinh thần đổi mới sáng tạo, dám nghĩ, dám làm',15],
+ ['i','p5a1','a) Hiểu biết đầy đủ lĩnh vực công tác; nắm vững quy định, quy trình nghiệp vụ của vị trí việc làm',2],
+ ['i','p5a2','a) Thường xuyên cập nhật kiến thức mới; nghiên cứu, phân tích, tổng hợp, vận dụng sáng tạo',1],
+ ['i','p5a3','a) Kỹ năng xử lý công việc độc lập, làm việc nhóm hiệu quả',1],
+ ['i','p5a4','a) Sử dụng công nghệ thông tin, áp dụng vào công việc chuyên môn',1],
+ ['i','p5b1','b) Nhiệm vụ thường xuyên: vận dụng thành thạo chuyên môn, duy trì ổn định chất lượng',3],
+ ['i','p5b2','b) Nhiệm vụ đột xuất: đề xuất giải pháp, phản ứng kịp thời, đáp ứng yêu cầu',2],
+ ['i','p5c1','c) Tinh thần trách nhiệm, tích cực; đề xuất cải tiến quy trình, giải pháp',1],
+ ['i','p5c2','c) Thái độ đúng mực, phong cách làm việc chuẩn mực, chuyên nghiệp',1],
+ ['i','p5c3','c) Phối hợp có hiệu quả với tập thể, cá nhân có liên quan',0.5],
+ ['i','p5d1','d) Có sản phẩm, giải pháp đột phá, sáng tạo đem lại hiệu quả thiết thực',1],
+ ['i','p5d2','d) Sẵn sàng nhận nhiệm vụ chính trị, đột xuất, phức tạp, trong điều kiện khó khăn',1],
+ ['i','p5d3','d) Chịu trách nhiệm trước kết quả công việc; có biện pháp khắc phục sai sót',0.5],
+ ['h','3','Về tự phê bình và phê bình, khắc phục hạn chế, khuyết điểm',5],
+ ['i','p53','Tinh thần tự phê bình, tự soi, tự sửa; mức độ tự giác nhận diện và khắc phục hạn chế, khuyết điểm đã được chỉ ra',5]];
+const TC8=[
+ ['h','I','Ý thức tổ chức kỷ luật, phẩm chất đạo đức (trừ 01 điểm/lần vi phạm)',15],
+ ['i','p8_1','1. Phẩm chất chính trị, đạo đức, lối sống',3],
+ ['i','p8_2','2. Thực hiện nội quy, quy chế làm việc, nguyên tắc tập trung dân chủ, tự phê bình và phê bình, trách nhiệm nêu gương',5],
+ ['i','p8_3','3. Tuân thủ kỷ cương và trật tự hành chính; nghiêm túc thực hiện công việc, nhiệm vụ được giao',3],
+ ['i','p8_4','4. Thực hiện tốt giao tiếp, ứng xử với nhân dân, cấp trên, cấp dưới và đồng nghiệp',2],
+ ['i','p8_5','5. Thực hiện các nội dung khác trong Quy tắc ứng xử của CBCCVC, NLĐ và quy tắc của ngành',2],
+ ['h','II','Năng lực lãnh đạo, quản lý điều hành',15],
+ ['i','p8_6','6. Năng lực tập hợp CBCCVC, xây dựng đơn vị/bộ phận đoàn kết, thống nhất',2],
+ ['i','p8_7','7. Chỉ đạo, điều hành, kiểm soát việc thực hiện nhiệm vụ kịp thời, không bỏ sót nhiệm vụ',2],
+ ['i','p8_8','8. Báo cáo kịp thời, chính xác với lãnh đạo về tình hình, kết quả thực hiện nhiệm vụ',2],
+ ['i','p8_9','9. Phối hợp, tạo lập quan hệ tốt với cá nhân, tổ chức liên quan',1],
+ ['i','p8_10','10. Có nhiệm vụ hoàn thành vượt tiến độ, có chất lượng và hiệu quả',3],
+ ['i','p8_11','11. Sáng tạo, cải tiến phương pháp làm việc, nâng cao hiệu quả công việc',3],
+ ['i','p8_12','12. Thực hiện tốt chức trách về đột phá phát triển khoa học, công nghệ, đổi mới sáng tạo, chuyển đổi số và các định hướng chiến lược khác',2]];
+const isLeader=u=>!!u&&u.role==='bgh';
+const isDep=u=>isLeader(u)&&/phó/i.test(u.jobTitle||'');
+const isHead=u=>isLeader(u)&&!isDep(u);
+const tcSet=u=>isLeader(u)?TC8:TC5;
+const tcName=u=>isLeader(u)?'Phụ lục 8 – Hướng dẫn 01-HD/TU (mục I, II)':'Phụ lục 5 – Quy định 255-QĐ/TU';
+const ORD='XTHK';
 const RATE={X:'Hoàn thành xuất sắc nhiệm vụ',T:'Hoàn thành tốt nhiệm vụ',H:'Hoàn thành nhiệm vụ',K:'Không hoàn thành nhiệm vụ'};
 const RCOL={X:'#0284c7',T:'#059669',H:'#d97706',K:'#dc2626'};
 const ST={DRAFT:['Đang soạn','bg-slate-200 text-slate-700'],PENDING_MANAGER:['Chờ duyệt','bg-amber-100 text-amber-800'],FINALIZED:['Đã chốt','bg-emerald-100 text-emerald-800']};
@@ -284,14 +337,14 @@ const newDoc=()=>({status:'DRAFT',generalScore:C().generalRatio,extraDeduct:0,no
 const toEmail=s=>{s=s.trim().toLowerCase();return s==='admin'?ADMIN_EMAIL:(s.includes('@')?s:s+DOMAIN)};
 const errMsg=e=>({'auth/invalid-credential':'Sai tài khoản hoặc mật khẩu.','auth/wrong-password':'Sai mật khẩu.','auth/user-not-found':'Tài khoản không tồn tại.','auth/invalid-email':'Tài khoản không hợp lệ.','auth/too-many-requests':'Thử sai quá nhiều lần, vui lòng đợi vài phút.','auth/network-request-failed':'Lỗi mạng, kiểm tra kết nối.','auth/operation-not-allowed':'Chưa bật Email/Password trong Firebase Authentication.','auth/unauthorized-domain':'Tên miền chưa thêm vào Authorized domains của Firebase.','auth/email-already-in-use':'Tài khoản đã tồn tại.','auth/weak-password':'Mật khẩu phải từ 6 ký tự.','auth/requires-recent-login':'Vui lòng đăng xuất, đăng nhập lại rồi thử lại.'}[e.code]||e.message||'Lỗi không xác định');
 function togglePass(){const i=$('l-pass'),s=i.type==='password';i.type=s?'text':'password';$('eye').className='fas fa-eye'+(s?'-slash':'')}
-try{const r=JSON.parse(localStorage.getItem('kpi_rem')||'null');if(r){$('l-user').value=r.u;$('l-pass').value=r.p;$('l-rem').checked=true}}catch(e){}
+try{const r=JSON.parse(localStorage.getItem('kpi_rem')||'null');if(r){$('l-user').value=r.u||'';$('l-rem').checked=true}}catch(e){}
 async function handleLogin(e){
  e.preventDefault();const raw=$('l-user').value.trim(),pass=$('l-pass').value,btn=$('l-btn');typedLogin=raw.toLowerCase().replace(DOMAIN,'');let email=toEmail(raw);try{const g=await dref('logins',typedLogin).get();if(g.exists)email=g.data().authEmail}catch(x){}
  btn.disabled=true;const l=toast('Đang xác thực...','info',true);
  try{
   try{await auth.signInWithEmailAndPassword(email,pass)}
   catch(err){if(email===ADMIN_EMAIL&&pass===BOOT_PASS&&['auth/user-not-found','auth/invalid-credential','auth/invalid-login-credentials'].includes(err.code))await auth.createUserWithEmailAndPassword(email,pass);else throw err}
-  try{if($('l-rem').checked)localStorage.setItem('kpi_rem',JSON.stringify({u:raw,p:pass}));else localStorage.removeItem('kpi_rem')}catch(x){}
+  try{if($('l-rem').checked)localStorage.setItem('kpi_rem',JSON.stringify({u:raw}));else localStorage.removeItem('kpi_rem')}catch(x){}
  }catch(err){toast(errMsg(err),'error')}
  l.remove();btn.disabled=false;
 }
@@ -385,6 +438,9 @@ function calc(ts){
  return{rows,ax,base,hard:ts.filter(t=>+t.group>=3).length,kpi:base?act/base*cf.kpiRatio:0,n,over,late,allDone:n>0&&ts.every(t=>t.objective||(t.completion??100)>=100),onTime:rows.every(r=>r.d===0),over30:n>0&&over/n>=cf.exceedThreshold};
 }
 function rate(total,c,note){const ok=c.allDone&&c.onTime&&c.over30&&!!(note??'').trim();if(total>=90&&ok)return{k:'X',elig:true};if(total>=70)return{k:'T',elig:false};return{k:total>=50?'H':'K',elig:false}}
+function rateU(total,c,note,u){const r=rate(total,c,note);if(isHead(u)&&cur.unitRating&&ORD.indexOf(r.k)<ORD.indexOf(cur.unitRating))return{k:cur.unitRating,elig:false,capped:true};return r}
+/* Phụ lục 8 – mục III: tỷ lệ số lượng, tiến độ, chất lượng */
+function pl8(c){const n=c.n,done=c.rows.filter(r=>r.t.objective||(r.t.completion??100)>=100).length,ok=c.rows.filter(r=>r.d===0).length,q=c.rows.filter(r=>!(r.t.errorCount>0)).length;const b4=p=>!n?0:p>=1?20:p>=.95?15:p>=.9?10:5,b6=p=>!n?0:p>=.95?30:p>=.9?25:p>=.8?20:p>=.75?15:p>=.7?10:0;const pd=n?done/n:0,po=n?ok/n:0,pq=n?q/n:0;return{n,done,ok,q,pd,po,pq,s13:b4(pd),s14:b4(po),s15:b6(pq),get s(){return this.s13+this.s14+this.s15}}}
 
 /* ===== BẢNG KPI ===== */
 function loadView(uid){
@@ -420,16 +476,17 @@ function render(){
    <td class="text-center">${p.edit?`<button onclick="delTask('${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>`:''}</td></tr>`})});
  $('kpi-body').innerHTML=h||'<tr><td colspan="15" class="text-center text-slate-400 py-8 italic">Chưa có nhiệm vụ.</td></tr>';
  $('t-base').textContent=c.base;$('t-kpi').textContent=f2(c.kpi);
- const gen=docInfo.generalScore??cf.generalRatio,ex=docInfo.extraDeduct||0,total=gen+c.kpi-ex,rt=rate(total,c,docInfo.note);
+ const gen=docInfo.generalScore??cf.generalRatio,ex=docInfo.extraDeduct||0,total=gen+c.kpi-ex,rt=rateU(total,c,docInfo.note,viewUser);
  $('s-gen').textContent=gen+' / '+cf.generalRatio+(ex?' (−'+ex+')':'');$('s-kpi').textContent=f2(c.kpi)+' / '+cf.kpiRatio;$('s-total').textContent=f2(total);
  $('ring').setAttribute('stroke-dasharray',`${Math.max(0,Math.min(100,total))*3.1416} 314.16`);$('ring').setAttribute('stroke',RCOL[rt.k]);
  if(document.activeElement!==$('s-note'))$('s-note').value=docInfo.note||'';$('s-note').readOnly=!p.edit;
  const cls={X:'bg-sky-50 text-sky-800 border-sky-300',T:'bg-emerald-50 text-emerald-800 border-emerald-300',H:'bg-amber-50 text-amber-800 border-amber-300',K:'bg-red-50 text-red-800 border-red-300'}[rt.k];
  $('s-rating').className='my-3 px-5 py-4 rounded-2xl border-2 font-black text-lg text-center '+cls;$('s-rating').textContent=RATE[rt.k];
- const cond=[[c.allDone,'Hoàn thành 100% nhiệm vụ'],[c.onTime,'Không trễ tiến độ do chủ quan'],[c.over30,`≥${cf.exceedThreshold*100}% nhiệm vụ vượt mức (${c.over}/${c.n})`],[!!(docInfo.note??'').trim(),'Có mô tả sản phẩm nổi trội'],[total>=90,'Tổng điểm ≥ 90']];
+ const cond=[[c.allDone,'Hoàn thành 100% nhiệm vụ'],[c.onTime,'Không trễ tiến độ do chủ quan'],[c.over30,`≥${cf.exceedThreshold*100}% nhiệm vụ vượt mức (${c.over}/${c.n})`],[!!(docInfo.note??'').trim(),'Có mô tả sản phẩm nổi trội'],[total>=90,'Tổng điểm ≥ 90']];if(isHead(viewUser)&&cur.unitRating)cond.push([!rt.capped,'Không cao hơn mức của tập thể ('+RATE[cur.unitRating]+')']);
  $('s-cond').innerHTML='<li class="font-bold text-slate-500">Điều kiện HTXS:</li>'+cond.map(x=>`<li class="${x[0]?'text-emerald-600':'text-red-500'}"><i class="fas fa-${x[0]?'circle-check':'circle-xmark'}"></i> ${x[1]}</li>`).join('');
  $('btn-30').disabled=!(p.edit||p.mgr);
- actions();persist(c,rt,total);
+ actions();persist(c,rt,total);renderQuarters();
+ $('btn-tc').innerHTML=`<i class="fas fa-file-word"></i> Tải ${isLeader(viewUser)?'Phụ lục 8':'Phụ lục 5'} (.doc)`;
 }
 function actions(){
  const p=perm(),s=docInfo.status||'DRAFT',a=$('actions');a.innerHTML='';if(!viewUid)return;
@@ -474,18 +531,33 @@ function upload(id){
  i.click();
 }
 
-/* ===== TIÊU CHÍ CHUNG ===== */
-const tcRead=()=>{const d={};C().tc.forEach(t=>d[t.id]=Math.max(0,parseInt($('tcv_'+t.id).value)||0));return d};
-function tcScore(d){let s=0,x=0;C().tc.forEach(t=>{const v=d[t.id]||0;s+=Math.max(0,t.max-v);x+=Math.max(0,v-t.max)});return{s,x}}
+/* ===== TIÊU CHÍ CHUNG (PL5 / PL8) ===== */
+const tcU=()=>viewUser||me;
+const tcItems=u=>tcSet(u).filter(x=>x[0]==='i');
+function tcSaved(id,max){const v=(docInfo.tcItems||{})[id];return v===undefined?max:v}
+function tcRead(){const d={};tcItems(tcU()).forEach(x=>{let v=parseFloat(($('tcv_'+x[1]).value||'').replace(',','.'));if(isNaN(v))v=0;d[x[1]]=Math.min(x[3],Math.max(0,Math.round(v*2)/2))});return d}
+function tcScore(d){let s=0;tcItems(tcU()).forEach(x=>s+=d[x[1]]||0);return{s:Math.round(s*100)/100,x:Math.max(0,parseFloat($('tc-xin')?.value)||0)}}
 function open30(){
- $('m30-body').innerHTML='<p class="text-xs text-slate-500">Nhập số lần vi phạm (mỗi lần trừ 01 điểm).</p>'+C().tc.map((t,i)=>`<div class="bg-white p-3 rounded-xl border"><div class="text-sm font-bold mb-2">${i+1}. ${esc(t.name)}</div><div class="flex items-center justify-between text-sm"><span>Số lần vi phạm: <input type="number" min="0" id="tcv_${t.id}" value="${(docInfo.tc30Data||[]).find(x=>x.id===t.id)?.violations||0}" onchange="calc30()" class="w-16 ti text-center font-bold"></span><span>Điểm: <b id="tcs_${t.id}" class="text-sky-700"></b> / ${t.max} <span id="tcok_${t.id}"></span></span></div></div>`).join('');
+ const u=tcU(),set=tcSet(u),ok=perm().edit||perm().mgr;
+ $('m30-body').innerHTML=`<p class="text-xs text-slate-600 font-bold">${esc(tcName(u))}. Chấm tối đa nếu đảm bảo; trừ điểm theo mức độ, số lần vi phạm.</p>`+set.map(x=>x[0]==='h'
+  ?`<div class="font-black text-sky-900 text-sm pt-2">${esc(x[1])}. ${esc(x[2])} <span class="text-slate-500">(${x[3]} điểm)</span></div>`
+  :`<div class="bg-white p-3 rounded-xl border flex justify-between items-center gap-3"><div class="text-sm">${esc(x[2])}</div><div class="flex items-center gap-1 shrink-0"><input type="number" min="0" max="${x[3]}" step="0.5" id="tcv_${x[1]}" value="${tcSaved(x[1],x[3])}" ${ok?'':'disabled'} onchange="calc30()" class="w-20 ti text-center font-bold"><span class="text-xs text-slate-500">/ ${x[3]}</span></div></div>`).join('')
+  +`<div class="bg-red-50 p-3 rounded-xl border border-red-200 flex justify-between items-center"><div class="text-sm font-bold text-red-700">Số điểm trừ bổ sung (đã trừ hết điểm tiêu chí nhưng tiếp tục vi phạm)</div><input type="number" min="0" step="0.5" id="tc-xin" value="${docInfo.extraDeduct||0}" ${ok?'':'disabled'} onchange="calc30()" class="w-20 ti text-center font-bold text-red-600"></div>`;
  calc30();$('m30').classList.remove('hide');
 }
-function calc30(){const d=tcRead(),r=tcScore(d);C().tc.forEach(t=>{const v=d[t.id];$('tcv_'+t.id).value=v;$('tcs_'+t.id).textContent=Math.max(0,t.max-v);const o=$('tcok_'+t.id);o.textContent=v?'Không đảm bảo':'Đảm bảo';o.className='bd ml-2 '+(v?'bg-red-100 text-red-700':'bg-emerald-100 text-emerald-700')});$('tc-total').textContent=`${r.s} / ${C().generalRatio}`;$('tc-extra').textContent=r.x}
+function calc30(){const r=tcScore(tcRead());$('tc-total').textContent=`${r.s} / ${C().generalRatio}`;$('tc-extra').textContent=r.x}
 async function save30(){
  const d=tcRead(),r=tcScore(d);
- try{await kset(viewUid,{tc30Data:C().tc.map(t=>({id:t.id,violations:d[t.id],score:Math.max(0,t.max-d[t.id])})),generalScore:r.s,extraDeduct:r.x});log('Chấm tiêu chí chung',`${r.s}/${C().generalRatio}`);$('m30').classList.add('hide');toast('Đã lưu tiêu chí chung!')}catch(e){toast('Lỗi ('+(e.code||'')+'): '+e.message,'error')}
+ try{await kset(viewUid,{tcItems:d,tcForm:isLeader(tcU())?'PL8':'PL5',generalScore:r.s,extraDeduct:r.x});log('Chấm tiêu chí chung',`${r.s}/${C().generalRatio}`);$('m30').classList.add('hide');toast('Đã lưu tiêu chí chung!')}catch(e){toast('Lỗi ('+(e.code||'')+'): '+e.message,'error')}
 }
+
+/* ===== KẾT QUẢ CÁC QUÝ (dùng cho kỳ đánh giá NĂM) ===== */
+function quarterRows(uid){return rawDocs.filter(d=>(d.uid||'')===uid&&d.periodId!==cur.id).map(d=>({d,p:periods.find(p=>p.id===d.periodId)})).filter(x=>x.p&&x.p.type!=='year').sort((a,b)=>(a.p.startAt||0)-(b.p.startAt||0))}
+function quarterHtml(u){if(cur.type!=='year'||!u)return'';const q=quarterRows(u.id);
+ return`<p><b>KẾT QUẢ ĐÁNH GIÁ CÁC QUÝ TRONG NĂM</b> <i>(là căn cứ để đánh giá năm, không cộng dồn cơ học)</i></p><table><tr><th>Kỳ đánh giá</th><th>Điểm KPI /70</th><th>Tiêu chí chung /30</th><th>Tổng điểm</th><th>Mức xếp loại</th><th>Trạng thái</th></tr>${q.map(x=>`<tr><td class="l">${esc(x.p.name)}</td><td>${f2(x.d.kpi)}</td><td>${f2(gsc(x.d))}</td><td>${f2(x.d.total)}</td><td>${esc(x.d.rating||'')}</td><td>${(ST[x.d.status]||ST.DRAFT)[0]}</td></tr>`).join('')||'<tr><td colspan="6">Chưa có dữ liệu các quý trên hệ thống.</td></tr>'}</table>`}
+function renderQuarters(){const b=$('s-quarters');if(!b)return;if(cur.type!=='year'||!viewUid){b.innerHTML='';b.classList.add('hide');return}
+ const q=quarterRows(viewUid);b.classList.remove('hide');
+ b.innerHTML=`<div class="font-bold text-sm mb-2"><i class="fas fa-layer-group text-sky-600"></i> Kết quả các quý (căn cứ đánh giá năm, không cộng dồn cơ học)</div><table class="w-full text-xs"><thead><tr><th>Kỳ</th><th>KPI</th><th>Tổng</th><th>Mức xếp loại</th></tr></thead><tbody>${q.map(x=>`<tr><td>${esc(x.p.name)}</td><td class="text-center">${f2(x.d.kpi)}</td><td class="text-center font-bold">${f2(x.d.total)}</td><td>${esc(x.d.rating||'')}</td></tr>`).join('')||'<tr><td colspan="4" class="text-center text-slate-400 py-2">Chưa có dữ liệu các quý.</td></tr>'}</tbody></table>`}
 
 /* ===== PHỤ LỤC II / III ===== */
 const gk=u=>u.peer||u.dept||'Chung';
@@ -504,24 +576,24 @@ function sec3(R){let i=0;const L=R.groups.filter(G=>G.elig.length>G.quota);retur
 function renderReports(){
  const R=reportData(),S=f=>R.groups.reduce((a,G)=>a+f(G),0);
  $('quota-line').textContent=`Số người HTT: ${S(G=>G.htt)} → tối đa ${S(G=>G.quota)} HTXS (tính theo từng nhóm tương đồng) | Đủ điều kiện: ${S(G=>G.elig.length)} | Đề xuất: ${R.chosen.size}.`;
- $('rep-body').innerHTML=R.rows.map((r,i)=>{const s=r.d.status||'DRAFT';return`<tr><td class="text-center">${i+1}</td><td class="font-bold">${esc(r.u.fullName)}</td><td class="text-xs">${esc(r.u.jobTitle||'GV')} - ${esc(r.u.dept||'')}</td><td class="text-xs">${esc(r.g)}</td><td><span class="bd ${ST[s][1]}">${ST[s][0]}</span></td><td class="text-center">${r.d.n||0}</td><td class="text-center font-bold text-emerald-600">${f2(r.d.kpi)}</td><td class="text-center">${gsc(r.d)}</td><td class="text-center font-black text-amber-600">${f2(r.d.total)}</td><td class="text-center">${r.d.over||0}</td><td class="text-center">${r.d.late||0}</td><td class="text-xs">${esc(r.d.rating||'---')}</td><td class="text-xs font-bold ${r.prop===RATE.X?'text-sky-700':''}">${esc(r.prop)}</td></tr>`}).join('')||'<tr><td colspan="13" class="text-center py-8 text-slate-400">Không có cấp dưới.</td></tr>';
+ $('rep-body').innerHTML=R.rows.map((r,i)=>{const s=r.d.status||'DRAFT';return`<tr><td class="text-center">${i+1}</td><td class="font-bold">${esc(r.u.fullName)}</td><td class="text-xs">${esc(r.u.jobTitle||'GV')} - ${esc(r.u.dept||'')}</td><td class="text-xs">${esc(r.g)}${isLeader(r.u)?' <b class="text-sky-700">(PL8)</b>':''}</td><td><span class="bd ${ST[s][1]}">${ST[s][0]}</span></td><td class="text-center">${r.d.n||0}</td><td class="text-center font-bold text-emerald-600">${f2(r.d.kpi)}</td><td class="text-center">${gsc(r.d)}</td><td class="text-center font-black text-amber-600">${f2(r.d.total)}</td><td class="text-center">${r.d.over||0}</td><td class="text-center">${r.d.late||0}</td><td class="text-xs">${esc(r.d.rating||'---')}</td><td class="text-xs font-bold ${r.prop===RATE.X?'text-sky-700':''}">${esc(r.prop)}</td></tr>`}).join('')||'<tr><td colspan="13" class="text-center py-8 text-slate-400">Không có cấp dưới.</td></tr>';
  $('rep-quota').innerHTML=sec2(R);$('rep-cmp').innerHTML=sec3(R);
 }
 const HX='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" lang="vi">';
-const PGCSS=`<style>@page{size:A4 landscape;margin:1.2cm}@page Section1{size:841.9pt 595.3pt;mso-page-orientation:landscape;margin:34pt}div.Section1{page:Section1}body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.35}.c{text-align:center}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #000;padding:3px;font-size:9pt;text-align:center;vertical-align:middle}th{background:#f2f2f2;color:#000;position:static}.l{text-align:left}.nb td{border:none;font-size:11pt}.ax td{font-weight:bold;background:#e8e8e8}</style>`;
+const PGCSS=`<style>@page{size:A4 landscape;margin:1.2cm}@page Section1{size:841.9pt 595.3pt;mso-page-orientation:landscape;margin:34pt}div.Section1{page:Section1}body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.35}.c{text-align:center}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #000;padding:3px;font-size:9pt;text-align:center;vertical-align:middle}th{background:#f2f2f2;color:#000;position:static}td.l,th.l,p.l{text-align:left!important}.nb td{border:none;font-size:11pt}.ax td{font-weight:bold;background:#e8e8e8}</style>`;
 function docHtml(){
  if(!viewUid)return null;
- const u=viewUser||me,c=calc(tasks),cf=C(),gen=gsc(docInfo),total=(docInfo.generalScore??cf.generalRatio)+c.kpi-(docInfo.extraDeduct||0),rt=rate(total,c,docInfo.note),fin=docInfo.status==='FINALIZED';
- const cb=on=>on?'☑':'□',dep=/phó/i.test(u.jobTitle||''),lead=!dep&&['tt','bgh'].includes(u.role);
+ const u=viewUser||me,c=calc(tasks),cf=C(),gen=gsc(docInfo),total=(docInfo.generalScore??cf.generalRatio)+c.kpi-(docInfo.extraDeduct||0),rt=rateU(total,c,docInfo.note,u),fin=docInfo.status==='FINALIZED';
+ const cb=on=>on?'☑':'□',dep=isDep(u),lead=isHead(u);
  let body='';
  AXES.forEach((an,ai)=>{const rs=c.rows.filter(r=>+r.t.axis===ai);if(!rs.length)return;const x=c.ax[ai];
-  body+=`<tr class="ax"><td colspan="8" class="l">${esc(an.split(' - ')[0])} — ${esc(an.split(' - ').slice(1).join(' - '))}</td><td colspan="6"></td><td>${f2(x.a)}</td><td>${f2(x.pct*100)}%</td><td>${f2(x.max)}</td><td>${f2(x.kpi)}</td><td></td></tr>`;
-  rs.forEach((r,i)=>{const t=r.t;body+=`<tr><td>${i+1}</td><td class="l">${esc(t.name)}</td><td>${t.group}</td><td>${r.b}</td><td class="l">${esc(t.product)}</td><td>${esc(t.qty)}</td><td>${vd(t.deadline)}</td><td>${r.b}</td><td>${t.completion??100}%</td><td>${f2(r.A)}</td><td>${t.errorCount||0}</td><td>${f2(r.B)}</td><td>${vd(t.doneDate)}</td><td>${f2(r.Cc)}</td><td>${f2(r.a)}</td><td></td><td></td><td>${f2(r.kpi)}</td><td class="l">${esc(t.note||'')}${t.evidenceUrl?' [MC: '+esc(t.evidenceUrl)+']':''}</td></tr>`})});
+  body+=`<tr class="ax"><td colspan="8" class="l" align="left">${esc(an.split(' - ')[0])} — ${esc(an.split(' - ').slice(1).join(' - '))}</td><td colspan="6"></td><td>${f2(x.a)}</td><td>${f2(x.pct*100)}%</td><td>${f2(x.max)}</td><td>${f2(x.kpi)}</td><td></td></tr>`;
+  rs.forEach((r,i)=>{const t=r.t;body+=`<tr><td>${i+1}</td><td class="l" align="left">${esc(t.name)}</td><td>${t.group}</td><td>${r.b}</td><td class="l" align="left">${esc(t.product)}</td><td>${esc(t.qty)}</td><td>${vd(t.deadline)}</td><td>${r.b}</td><td>${t.completion??100}%</td><td>${f2(r.A)}</td><td>${t.errorCount||0}</td><td>${f2(r.B)}</td><td>${vd(t.doneDate)}</td><td>${f2(r.Cc)}</td><td>${f2(r.a)}</td><td></td><td></td><td>${f2(r.kpi)}</td><td class="l" align="left">${esc(t.note||'')}${t.evidenceUrl?' [MC: '+esc(t.evidenceUrl)+']':''}</td></tr>`})});
  const nums=Array.from({length:19},(_,i)=>i+1),fm={8:'8=4*6',10:'10=8*9',15:'15=(10+12+14)/3',16:'16=15/Điểm chấm trục',18:'18=16*17'};
  const rtb=[['X','Hoàn thành xuất sắc nhiệm vụ','Từ 90 điểm trở lên và đáp ứng đầy đủ điều kiện kèm theo'],['T','Hoàn thành tốt nhiệm vụ','Từ 70 đến dưới 90 điểm và đáp ứng điều kiện của mức xếp loại'],['H','Hoàn thành nhiệm vụ','Từ 50 đến dưới 70 điểm và đáp ứng điều kiện của mức xếp loại'],['K','Không hoàn thành nhiệm vụ','Dưới 50 điểm hoặc thuộc trường hợp phải xếp loại không hoàn thành']];
  return`${HX}<head><meta charset="utf-8">${PGCSS}</head><body><div class="Section1">
-<p class="c"><b>PHỤ LỤC II</b><br><b>PHIẾU CHẤM ĐIỂM KPI VÀ TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ CÁ NHÂN ${esc(cur.name.toUpperCase())}</b><br><i>(Áp dụng chung đối với công chức, viên chức giữ chức vụ lãnh đạo, quản lý và không giữ chức vụ lãnh đạo, quản lý)</i></p>
-<p>Họ và tên: <b>${esc(u.fullName)}</b><br>Chức vụ/chức danh, vị trí việc làm: ${esc(u.jobTitle||'')}<br>Phòng, đơn vị: ${esc(u.dept||'')} - Trường PTDTNT THCS & THPT Đắk Song<br>Nhóm đối tượng: ${cb(lead)} Trưởng phòng/Chánh Văn phòng/Người đứng đầu đơn vị &nbsp; ${cb(dep)} Cấp phó &nbsp; ${cb(!lead&&!dep)} Công chức, viên chức không giữ chức vụ lãnh đạo, quản lý<br>Nguồn nhiệm vụ: □ Phụ lục 3 QĐ số 20287/QĐ-SNV □ Phụ lục 4 QĐ số 20287/QĐ-SNV ☑ Kế hoạch/văn bản phân công chi tiết □ Nhiệm vụ phát sinh hợp lệ</p>
+<p class="c" align="center"><b>PHỤ LỤC II</b><br><b>PHIẾU CHẤM ĐIỂM KPI VÀ TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ CÁ NHÂN ${esc(cur.name.toUpperCase())}</b><br><i>(Áp dụng chung đối với công chức, viên chức giữ chức vụ lãnh đạo, quản lý và không giữ chức vụ lãnh đạo, quản lý)</i></p>
+<p>Họ và tên: <b>${esc(u.fullName)}</b><br>Chức vụ/chức danh, vị trí việc làm: ${esc(u.jobTitle||'')}<br>Phòng, đơn vị: ${esc(u.dept||'')} - Trường PTDTNT THCS & THPT Đắk Song<br>Nhóm đối tượng: ${cb(lead)} Trưởng phòng/Chánh Văn phòng/Người đứng đầu đơn vị &nbsp; ${cb(dep)} Cấp phó &nbsp; ${cb(!lead&&!dep)} Công chức, viên chức không giữ chức vụ lãnh đạo, quản lý<br>Nguồn nhiệm vụ: ☑ Danh mục nhiệm vụ, sản phẩm công việc đã đăng ký ☑ Kế hoạch/văn bản phân công chi tiết ${cb(tasks.some(t=>t.assignedBy&&t.assignedBy!==t.userId))} Nhiệm vụ phát sinh hợp lệ</p>
 <p><b>I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ THEO KPI (${cf.kpiRatio} ĐIỂM)</b></p>
 <table><tr><th colspan="8">Danh mục nhiệm vụ được duyệt + nhiệm vụ phát sinh</th><th colspan="11">Kết quả thực hiện</th></tr>
 <tr><th rowspan="2">TT</th><th rowspan="2">Nhiệm vụ được giao</th><th rowspan="2">Phân nhóm (độ khó, mới, phức tạp; phạm vi tác động)</th><th rowspan="2">Điểm chấm nhiệm vụ</th><th rowspan="2">Sản phẩm cụ thể</th><th rowspan="2">Số lượng</th><th rowspan="2">Thời gian hoàn thành</th><th rowspan="2">Điểm chấm</th><th colspan="2">Số lượng A</th><th colspan="2">Chất lượng B</th><th colspan="2">Tiến độ C</th><th rowspan="2">Tổng điểm chấm thực tế</th><th rowspan="2">Điểm KPI (%)</th><th rowspan="2">Điểm tối đa</th><th rowspan="2">Điểm đạt</th><th rowspan="2">Ghi chú</th></tr>
@@ -531,26 +603,62 @@ function docHtml(){
 <p style="font-size:10pt"><i>* Ghi chú cách ghi: đối với cá nhân không giữ chức vụ lãnh đạo, quản lý, cột “Nhiệm vụ được giao” ghi số nhiệm vụ của tập thể hoặc căn cứ giao nhiệm vụ phát sinh. Điểm KPI quy đổi từng nhiệm vụ được tính theo tỷ trọng điểm chuẩn, bảo đảm tổng điểm KPI tối đa là ${cf.kpiRatio} điểm.</i></p>
 <p><b>II. TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ CÁ NHÂN</b></p>
 <table><tr><th>Nội dung</th><th>Điểm tối đa</th><th>Cá nhân tự chấm</th><th>Điểm sau rà soát, xác nhận</th></tr>
-<tr><td class="l">Nhóm tiêu chí chung theo biểu mẫu của cơ quan Đảng</td><td>${cf.generalRatio}</td><td>${f2(gen)}</td><td>${fin?f2(gen):''}</td></tr>
-<tr><td class="l">Kết quả thực hiện nhiệm vụ theo KPI</td><td>${cf.kpiRatio}</td><td>${f2(c.kpi)}</td><td>${fin?f2(c.kpi):''}</td></tr>
-<tr><td class="l"><b>TỔNG ĐIỂM</b></td><td><b>100</b></td><td><b>${f2(total)}</b></td><td><b>${fin?f2(total):''}</b></td></tr></table>
+<tr><td class="l" align="left">Nhóm tiêu chí chung (${tcName(u)})</td><td>${cf.generalRatio}</td><td>${f2(gen)}</td><td>${fin?f2(gen):''}</td></tr>
+<tr><td class="l" align="left">Kết quả thực hiện nhiệm vụ theo KPI</td><td>${cf.kpiRatio}</td><td>${f2(c.kpi)}</td><td>${fin?f2(c.kpi):''}</td></tr>
+<tr><td class="l" align="left"><b>TỔNG ĐIỂM</b></td><td><b>100</b></td><td><b>${f2(total)}</b></td><td><b>${fin?f2(total):''}</b></td></tr></table>
 <p><b>III. TỰ ĐỀ XUẤT MỨC XẾP LOẠI</b></p>
-<table><tr><th>Mức xếp loại</th><th>Khung điểm và điều kiện</th><th>Cá nhân tự đề xuất</th></tr>${rtb.map(x=>`<tr><td class="l">${x[1]}</td><td class="l">${x[2]}</td><td>${cb(rt.k===x[0])}</td></tr>`).join('')}</table>
+<table><tr><th>Mức xếp loại</th><th>Khung điểm và điều kiện</th><th>Cá nhân tự đề xuất</th></tr>${rtb.map(x=>`<tr><td class="l" align="left">${x[1]}</td><td class="l" align="left">${x[2]}</td><td>${cb(rt.k===x[0])}</td></tr>`).join('')}</table>
 <p>Kết quả, sản phẩm nổi trội hoặc vượt mức yêu cầu (nếu đề xuất Hoàn thành xuất sắc nhiệm vụ):<br>${esc(docInfo.note||'')||'................................................................................................................................'}</p>
-<table class="nb"><tr><td><b>CÁ NHÂN TỰ ĐÁNH GIÁ</b><br>(Ký, ghi rõ họ tên)</td><td><b>NGƯỜI TRỰC TIẾP NHẬN XÉT, ĐỀ XUẤT (*)</b><br>(Ký, ghi rõ họ tên)</td><td><b>XÁC NHẬN CỦA LÃNH ĐẠO PHỤ TRÁCH PHÒNG, ĐƠN VỊ</b><br>(Ký, ghi rõ họ tên)</td></tr></table>
+${quarterHtml(u)}<table class="nb"><tr><td><b>CÁ NHÂN TỰ ĐÁNH GIÁ</b><br>(Ký, ghi rõ họ tên)</td><td><b>NGƯỜI TRỰC TIẾP NHẬN XÉT, ĐỀ XUẤT (*)</b><br>(Ký, ghi rõ họ tên)</td><td><b>XÁC NHẬN CỦA LÃNH ĐẠO PHỤ TRÁCH PHÒNG, ĐƠN VỊ</b><br>(Ký, ghi rõ họ tên)</td></tr></table>
 <p style="font-size:10pt"><i>(*) Đối với người đứng đầu đơn vị: không áp dụng ô “Người trực tiếp nhận xét, đề xuất”. Kết quả xác nhận tại Phụ lục này là kết quả kiểm chứng trước khi trình tập thể xem xét, đánh giá; không phải kết quả xếp loại cuối cùng.</i></p></div></body></html>`;
 }
 function reportHtml(){
  const R=reportData(),nums=Array.from({length:13},(_,i)=>i+1);
  return`${HX}<head><meta charset="utf-8">${PGCSS}</head><body><div class="Section1">
-<p class="c"><b>PHỤ LỤC III</b><br><b>BẢNG TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ, KIỂM SOÁT TỶ LỆ VÀ ĐỀ XUẤT XẾP LOẠI ${esc(cur.name.toUpperCase())}</b></p>
+<p class="c" align="center"><b>PHỤ LỤC III</b><br><b>BẢNG TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ, KIỂM SOÁT TỶ LỆ VÀ ĐỀ XUẤT XẾP LOẠI ${esc(cur.name.toUpperCase())}</b></p>
 <p>Phòng, đơn vị: Trường PTDTNT THCS & THPT Đắk Song</p><p><b>I. TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ CÁ NHÂN</b></p>
 <table><tr><th>TT</th><th>Họ và tên</th><th>Chức vụ/ chức danh</th><th>Nhóm đối tượng tương đồng</th><th>Tổng số nhiệm vụ</th><th>Điểm KPI /70</th><th>Điểm tiêu chí chung /30</th><th>Tổng điểm /100</th><th>NV vượt yêu cầu</th><th>NV chậm/ chưa hoàn thành</th><th>Mức cá nhân tự đề xuất</th><th>Mức phòng, đơn vị đề xuất</th><th>Ghi chú</th></tr>
-<tr>${nums.map(n=>`<th>${n}</th>`).join('')}</tr>${R.rows.map((r,i)=>`<tr><td>${i+1}</td><td class="l">${esc(r.u.fullName)}</td><td class="l">${esc(r.u.jobTitle||'')}</td><td>${esc(r.g)}</td><td>${r.d.n||0}</td><td>${f2(r.d.kpi)}</td><td>${f2(gsc(r.d))}</td><td>${f2(r.d.total)}</td><td>${r.d.over||0}</td><td>${r.d.late||0}</td><td>${esc(r.d.rating||'')}</td><td>${esc(r.prop)}</td><td></td></tr>`).join('')}</table>
+<tr>${nums.map(n=>`<th>${n}</th>`).join('')}</tr>${R.rows.map((r,i)=>`<tr><td>${i+1}</td><td class="l" align="left">${esc(r.u.fullName)}</td><td class="l" align="left">${esc(r.u.jobTitle||'')}</td><td>${esc(r.g)}</td><td>${r.d.n||0}</td><td>${f2(r.d.kpi)}</td><td>${f2(gsc(r.d))}</td><td>${f2(r.d.total)}</td><td>${r.d.over||0}</td><td>${r.d.late||0}</td><td>${esc(r.d.rating||'')}</td><td>${esc(r.prop)}</td><td></td></tr>`).join('')}</table>
 <p><b>II. KIỂM SOÁT TỶ LỆ “HOÀN THÀNH XUẤT SẮC NHIỆM VỤ”</b></p>${sec2(R)}
 <p><b>III. DANH SÁCH SO SÁNH, LỰA CHỌN KHI SỐ CÁ NHÂN ĐỦ ĐIỀU KIỆN HTXS VƯỢT TỶ LỆ</b></p>${sec3(R)}<br>
 <table class="nb"><tr><td><b>NGƯỜI LẬP BIỂU</b><br>(Ký, ghi rõ họ tên)</td><td><b>TRƯỞNG PHÒNG/THỦ TRƯỞNG ĐƠN VỊ</b><br>(Ký, ghi rõ họ tên)</td><td><b>XÁC NHẬN CỦA LÃNH ĐẠO PHỤ TRÁCH PHÒNG, ĐƠN VỊ</b><br>(Ký, ghi rõ họ tên)</td></tr></table></div></body></html>`;
 }
+
+const PGCSS_P=`<style>@page{size:A4;margin:2cm 1.5cm 2cm 3cm}@page Section1{size:595.3pt 841.9pt;margin:56pt 42pt 56pt 85pt}div.Section1{page:Section1}body{font-family:'Times New Roman',serif;font-size:13pt;line-height:1.3}.c{text-align:center}.r{text-align:right}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #000;padding:3px 4px;font-size:11pt;vertical-align:middle;text-align:center}th{background:#f2f2f2;position:static;color:#000}td.l,th.l,p.l{text-align:left!important}.nb td{border:none;font-size:12pt}.hd td{font-weight:bold;background:#eee}</style>`;
+function tcDocHtml(){
+ if(!viewUid)return null;
+ const u=viewUser||me,c=calc(tasks),cf=C(),lead=isLeader(u),set=tcSet(u),gen=(docInfo.generalScore??cf.generalRatio),ex=docInfo.extraDeduct||0,X=t=>t?'x':'';
+ const head=`<table class="nb"><tr><td class="c" align="center">SỞ GD&ĐT LÂM ĐỒNG<br><b>TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG</b><br>***</td><td class="c" align="center"><b>${lead?'ĐẢNG CỘNG SẢN VIỆT NAM':'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập – Tự do – Hạnh phúc'}</b><br><i>Đức An, ngày ${new Date().getDate()} tháng ${new Date().getMonth()+1} năm ${new Date().getFullYear()}</i></td></tr></table>`;
+ const who=`<p>Họ và tên: <b>${esc(u.fullName)}</b>${u.dob?' &nbsp;&nbsp;&nbsp; Ngày sinh: '+vd(u.dob):''}<br>${lead?'Chức vụ chính quyền':'Chức vụ, vị trí việc làm'}: ${esc(u.jobTitle||'')}<br>Đơn vị công tác: ${esc(u.dept||'')} - Trường PTDTNT THCS và THPT Đắk Song</p>`;
+ const sums={};let hh=null;set.forEach(x=>{if(x[0]==='h'){hh=x[1];sums[hh]=0}else sums[hh]+=tcSaved(x[1],x[3])});
+ let rows='';set.forEach(x=>{if(x[0]==='h'){rows+=`<tr class="hd"><td>${esc(x[1])}</td><td class="l" align="left">${esc(x[2])}</td>${lead?'<td></td><td></td>':''}<td>${x[3]}</td><td>${Math.round(sums[x[1]]*100)/100}</td></tr>`}
+  else{const v=tcSaved(x[1],x[3]);rows+=`<tr><td></td><td class="l" align="left">${esc(x[2])}</td>${lead?`<td>${X(v>=x[3])}</td><td>${X(v<x[3])}</td>`:''}<td>${x[3]}</td><td>${v}</td></tr>`}});
+ if(!lead){
+  const total=gen+c.kpi-ex,rt=rateU(total,c,docInfo.note,u);
+  return`${HX}<head><meta charset="utf-8">${PGCSS_P}</head><body><div class="Section1">${head}
+<p class="c" align="center"><b>BẢNG TỰ CHẤM ĐIỂM THEO KHUNG TIÊU CHÍ ĐÁNH GIÁ<br>ĐỐI VỚI CÁ NHÂN KHÔNG GIỮ CHỨC VỤ LÃNH ĐẠO, QUẢN LÝ – ${esc(cur.name.toUpperCase())}</b><br><i>(Phụ lục 5 kèm theo Quy định số 255-QĐ/TU ngày 20/11/2025 của Ban Thường vụ Tỉnh ủy)</i></p>${who}
+<table><tr><th>STT</th><th>Tiêu chí đánh giá</th><th>Điểm chuẩn</th><th>Tự chấm</th></tr><tr class="hd"><td>I</td><td class="l" align="left">CÁC TIÊU CHÍ CHUNG</td><td>30</td><td>${f2(gen)}</td></tr>${rows}
+<tr class="hd"><td>II</td><td class="l" align="left">NHÓM TIÊU CHÍ VỀ KẾT QUẢ THỰC HIỆN NHIỆM VỤ<br><span style="font-weight:normal">(Chấm theo KPI tại Phiếu chấm điểm KPI – Phụ lục II: ${c.n} nhiệm vụ, tổng điểm chuẩn ${c.base})</span></td><td>70</td><td>${f2(c.kpi)}</td></tr>
+${ex?`<tr><td></td><td class="l" align="left">Số điểm trừ bổ sung</td><td></td><td>-${ex}</td></tr>`:''}<tr class="hd"><td></td><td class="l" align="left">TỔNG ĐIỂM (I + II)</td><td>100</td><td>${f2(total)}</td></tr></table>
+<p><b>Tự đề xuất xếp loại:</b> ${RATE[rt.k]}${total>=90&&rt.k!=='X'?' <i>(tổng điểm từ 90 nhưng chưa đáp ứng đủ điều kiện Hoàn thành xuất sắc nhiệm vụ)</i>':''}</p>
+<table class="nb"><tr><td class="c" align="center"><b>TỔ TRƯỞNG / NGƯỜI TRỰC TIẾP QUẢN LÝ</b><br>(Nhận xét, ký, ghi rõ họ tên)</td><td class="c" align="center"><b>NGƯỜI TỰ ĐÁNH GIÁ</b><br>(Ký, ghi rõ họ tên)<br><br><br><br><b>${esc(u.fullName)}</b></td></tr></table></div></body></html>`}
+ const p=pl8(c),tot=gen+p.s,off=tot-ex,rt=rateU(off,c,docInfo.note,u),r3=(no,txt,mx,pc,cnt,sc)=>`<tr><td>${no}</td><td class="l" align="left">${txt}</td><td>${p.n} nhiệm vụ</td><td>${cnt} nhiệm vụ</td><td>${cnt}/${p.n} = ${f2(pc*100)}%</td><td>${mx}</td><td>${sc}</td></tr>`;
+ const bands=[['X','Hoàn thành xuất sắc nhiệm vụ','Từ 90 đến 100'],['T','Hoàn thành tốt nhiệm vụ','Từ 70 đến dưới 90'],['H','Hoàn thành nhiệm vụ','Từ 50 đến dưới 70'],['K','Không hoàn thành nhiệm vụ','Dưới 50 điểm']];
+ return`${HX}<head><meta charset="utf-8">${PGCSS_P}</head><body><div class="Section1"><p class="r" align="right"><b>PHỤ LỤC 8</b></p>
+<p class="c" align="center"><b>KHUNG ĐÁNH GIÁ KẾT QUẢ CÔNG TÁC CỦA CÁ NHÂN<br>LÃNH ĐẠO, QUẢN LÝ CẤP PHÒNG THUỘC CƠ QUAN CẤP TỈNH</b><br><i>Kỳ đánh giá: ${esc(cur.name)}</i></p>${head}
+<p class="c" align="center"><b>BẢN TỰ ĐÁNH GIÁ, XẾP LOẠI CỦA CÁ NHÂN</b></p>${who}<p><b>I. TỰ ĐÁNH GIÁ KẾT QUẢ THỰC HIỆN NHIỆM VỤ</b></p>
+<table><tr><th>STT</th><th>Tiêu chí đánh giá</th><th>Đảm bảo<br>(x)</th><th>Không đảm bảo<br>(x)</th><th>Điểm tối đa</th><th>Điểm đạt</th></tr>${rows}</table>
+<table><tr><th>STT</th><th>Kết quả thực hiện chức trách, nhiệm vụ được giao</th><th>Mục tiêu, nhiệm vụ đề ra</th><th>Kết quả sản phẩm thực tế</th><th>Điểm KPI (%)</th><th>Điểm tối đa</th><th>Điểm đạt</th></tr>
+<tr class="hd"><td>III</td><td class="l" align="left" colspan="4">KẾT QUẢ THỰC HIỆN CHỨC TRÁCH, NHIỆM VỤ ĐƯỢC GIAO</td><td>70</td><td>${p.s}</td></tr>
+${r3(13,'Tỷ lệ số lượng công việc, sản phẩm hoàn thành',20,p.pd,p.done,p.s13)}${r3(14,'Tỷ lệ công việc, sản phẩm bảo đảm đúng tiến độ được giao',20,p.po,p.ok,p.s14)}${r3(15,'Tỷ lệ công việc, sản phẩm bảo đảm chất lượng được cấp có thẩm quyền xác nhận, phê duyệt',30,p.pq,p.q,p.s15)}
+<tr class="hd"><td></td><td class="l" align="left" colspan="4">Tổng số điểm đạt được (I + II + III)</td><td>100</td><td>${f2(tot)}</td></tr><tr><td></td><td class="l" align="left" colspan="4">Số điểm bị trừ bổ sung (nếu có)</td><td></td><td>${ex}</td></tr><tr class="hd"><td></td><td class="l" align="left" colspan="4">TỔNG SỐ ĐIỂM CHÍNH THỨC</td><td></td><td>${f2(off)}</td></tr></table>
+<p><b>II. KẾT QUẢ ĐỀ XUẤT XẾP LOẠI</b></p><table><tr><th>TT</th><th>Xếp loại mức độ hoàn thành nhiệm vụ</th><th>Khung điểm</th><th>Tổng số điểm chính thức – cá nhân tự chấm</th><th>Cơ quan, đơn vị chấm</th><th>Cá nhân tự xếp loại (X)</th><th>Cơ quan, đơn vị xếp loại (X)</th></tr>
+${bands.map((b,i)=>`<tr><td>${i+1}</td><td class="l" align="left">${b[1]}</td><td>${b[2]}</td><td>${i===0?f2(off):''}</td><td></td><td>${rt.k===b[0]?'X':''}</td><td></td></tr>`).join('')}</table>
+${off>=90&&rt.k!=='X'?`<p style="font-size:11pt"><i>Ghi chú: Tổng số điểm chính thức đạt ${f2(off)} nhưng chưa đáp ứng đủ điều kiện Hoàn thành xuất sắc nhiệm vụ${rt.capped?' / mức xếp loại không cao hơn mức của tập thể đơn vị':''}.</i></p>`:''}${quarterHtml(u)}
+<table class="nb"><tr><td class="c" align="center"><b>XÁC NHẬN CỦA TẬP THỂ LÃNH ĐẠO</b><br>(Ký, ghi rõ họ tên)</td><td class="c" align="center"><b>NGƯỜI TỰ ĐÁNH GIÁ</b><br>(Ký, ghi rõ họ tên)<br><br><br><br><b>${esc(u.fullName)}</b></td></tr></table></div></body></html>`;
+}
+function previewTc(){const h=tcDocHtml();if(!h)return toast('Chưa chọn phiếu!','warning');showPrev('Xem trước '+(isLeader(viewUser)?'Phụ lục 8':'Phụ lục 5'),h)}
+function downloadTc(){const h=tcDocHtml();if(!h)return toast('Chưa chọn phiếu!','warning');saveFile(h,'application/msword',`${isLeader(viewUser)?'PhuLuc_8':'PhuLuc_5'}_${slug((viewUser||me).fullName)}.doc`)}
 const showPrev=(t,h)=>{$('prev-title').textContent=t;$('prev-frame').srcdoc=h;$('mprev').classList.remove('hide')};
 function previewDoc(){const h=docHtml();if(!h)return toast('Chưa chọn phiếu!','warning');showPrev('Xem trước Phụ lục II',h)}
 function previewReport(){showPrev('Xem trước Phụ lục III',reportHtml())}
@@ -599,10 +707,11 @@ function renderDepts(){const l=$('dept-list');if(!l)return;l.innerHTML=depts.map
  $('e-dept').innerHTML='<option value="">-- Chọn Tổ --</option>'+depts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('')}
 async function addDept(){if(me?.role!=='admin')return;const v=$('new-dept').value.trim();if(!v||depts.includes(v))return toast('Tên tổ trống hoặc đã tồn tại!','warning');await dref('config','departments').set({list:[...depts,v]});$('new-dept').value=''}
 async function delDept(i){if(me?.role==='admin'&&confirm('Xóa tổ '+depts[i]+'?'))await dref('config','departments').set({list:depts.filter((_,k)=>k!==i)})}
-function renderPeriods(){const l=$('period-list');if(!l)return;l.innerHTML=periods.map(p=>`<tr class="border-b"><td class="p-2 font-bold">${esc(p.name)}</td><td class="p-2 text-xs">Chốt ${vd(p.cutoff)} · Hạn nộp ${vd(p.dueDate)||'—'}</td><td class="p-2"><span class="bd ${p.status==='locked'?'bg-slate-200 text-slate-700':'bg-emerald-100 text-emerald-800'}">${p.status==='locked'?'Đã khóa':'Đang mở'}</span></td><td class="p-2 text-right"><button onclick="togglePeriod('${p.id}')" class="text-sky-700 font-bold text-xs">${p.status==='locked'?'Mở lại':'Khóa kỳ'}</button></td></tr>`).join('')}
+function renderPeriods(){const l=$('period-list');if(!l)return;l.innerHTML=periods.map(p=>`<tr class="border-b"><td class="p-2 font-bold">${esc(p.name)}</td><td class="p-2 text-xs">${p.type==='year'?'<b>Kỳ Năm</b> · ':''}Chốt ${vd(p.cutoff)} · Hạn nộp ${vd(p.dueDate)||'—'}</td><td class="p-2 text-xs">Mức tập thể: <select onchange="setUnitRating('${p.id}',this.value)" class="ti !py-1 !text-xs inline w-auto"><option value="">-- chưa xác định --</option>${'XTHK'.split('').map(k=>`<option value="${k}" ${p.unitRating===k?'selected':''}>${RATE[k]}</option>`).join('')}</select></td><td class="p-2"><span class="bd ${p.status==='locked'?'bg-slate-200 text-slate-700':'bg-emerald-100 text-emerald-800'}">${p.status==='locked'?'Đã khóa':'Đang mở'}</span></td><td class="p-2 text-right"><button onclick="togglePeriod('${p.id}')" class="text-sky-700 font-bold text-xs">${p.status==='locked'?'Mở lại':'Khóa kỳ'}</button></td></tr>`).join('')}
+async function setUnitRating(id,v){try{await dref('periods',id).update({unitRating:v||''});log('Mức xếp loại tập thể',v);toast('Đã lưu mức tập thể. Hiệu trưởng không được xếp cao hơn mức này.')}catch(e){toast('Lỗi: '+e.message,'error')}}
 async function togglePeriod(id){const p=periods.find(x=>x.id===id);if(!p||!confirm((p.status==='locked'?'Mở lại ':'Khóa ')+p.name+'?'))return;await dref('periods',id).update({status:p.status==='locked'?'open':'locked'});log('Đổi trạng thái kỳ',p.name)}
 async function addPeriod(e){e.preventDefault();const f=e.target,name=$('pe-name').value.trim();
- try{await dref('periods','p'+Date.now()).set({name,cutoff:$('pe-cutoff').value,dueDate:$('pe-due').value,status:'open',startAt:Date.now(),config:CFG});log('Tạo kỳ đánh giá',name);f.reset();toast('Đã tạo kỳ mới!')}catch(x){toast('Lỗi: '+x.message,'error')}}
+ try{await dref('periods','p'+Date.now()).set({name,type:$('pe-type').value,cutoff:$('pe-cutoff').value,dueDate:$('pe-due').value,status:'open',startAt:Date.now(),config:CFG});log('Tạo kỳ đánh giá',name);f.reset();toast('Đã tạo kỳ mới!')}catch(x){toast('Lỗi: '+x.message,'error')}}
 function renderPerms(){const hd=$('perm-head');if(!hd)return;hd.innerHTML='<th class="text-left">Vai trò</th>'+Object.values(PERMS).map(x=>`<th>${x}</th>`).join('');
  $('perm-body').innerHTML=['gv','tt','bgh','tk'].map(r=>`<tr><td class="font-bold p-2">${ROLES[r]}</td>${Object.keys(PERMS).map(k=>`<td class="text-center"><input type="checkbox" class="w-4 h-4 accent-sky-600" ${(perms[r]||{})[k]?'checked':''} onchange="savePerm('${r}','${k}',this.checked)"></td>`).join('')}</tr>`).join('')}
 async function savePerm(r,k,v){perms={...perms,[r]:{...(perms[r]||{}),[k]:v?1:0}};try{await dref('config','roles').set({perms});toast('Đã lưu phân quyền!')}catch(e){toast('Lỗi ('+(e.code||'')+'): '+e.message,'error')}}
