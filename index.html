@@ -393,9 +393,14 @@ auth.onAuthStateChanged(async u=>{
   start(m.data().userId,m.data().role);
  }catch(e){toast('Lỗi hệ thống: '+e.message+' (kiểm tra Firestore Rules)','error');auth.signOut()}
 });
+let permShown=0;
+const permErrL=lbl=>e=>permErr(e,lbl);
+function permErr(e,lbl){console.error('Firestore',lbl||'',e);if(Date.now()-permShown<8000)return;permShown=Date.now();
+ if(e&&(e.code==='permission-denied'||/insufficient permissions/i.test(e.message||'')))toast('Rules chặn quyền đọc'+(lbl?' “'+lbl+'”':'')+'. Kiểm tra: tài khoản đang xem có phải của mình/cấp dưới trực tiếp (ô Người duyệt) không; nếu vừa đổi vai trò, tổ, người duyệt thì đăng xuất rồi đăng nhập lại.','error');
+ else toast('Lỗi đọc dữ liệu: '+(e&&e.message||e),'error')}
 function start(uid,role){
  if(started)return;started=true;const adm=role==='admin';
- const er=e=>toast('Lỗi đọc dữ liệu: '+e.message,'error');
+ const er=permErr;
  cref('users').onSnapshot(s=>{users=s.docs.map(d=>({...d.data(),id:d.id}));const u=users.find(x=>x.id===uid);
   if(u){const first=!me;me=u;if(first)enterApp();renderAcct();if(!first&&!$('v-admin').classList.contains('hide'))renderUsers()}},er);
  dref('config','departments').onSnapshot(s=>{if(s.exists)depts=s.data().list||[];else{depts=["Ban Giám Hiệu","Tổ Khoa học Xã hội","Tổ Khoa học Tự nhiên","Tổ Văn phòng"];if(adm)dref('config','departments').set({list:depts})}renderDepts()},er);
@@ -500,9 +505,9 @@ function pl8(c){const n=c.n,done=c.rows.filter(r=>r.t.objective||(r.t.completion
 function loadView(uid){
  unsubs.forEach(f=>f());unsubs=[];viewUid=uid||null;viewUser=users.find(u=>u.id===uid)||null;tasks=[];docInfo=newDoc();
  if(!viewUid||!cur.id)return render();
- const er=e=>toast('Lỗi đọc dữ liệu: '+e.message,'error');
- unsubs.push(kdoc(uid).onSnapshot(s=>{docInfo=s.exists?{...newDoc(),...s.data()}:newDoc();render()},er));
- unsubs.push(cref('kpi_tasks').where('userId','==',uid).onSnapshot(s=>{tasks=s.docs.map(d=>({...d.data(),id:d.id})).filter(t=>t.periodId===cur.id).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));render()},er));
+ const er=permErr;
+ unsubs.push(kdoc(uid).onSnapshot(s=>{docInfo=s.exists?{...newDoc(),...s.data()}:newDoc();render()},permErrL('phiếu đánh giá của '+((viewUser||{}).fullName||''))));
+ unsubs.push(cref('kpi_tasks').where('userId','==',uid).onSnapshot(s=>{tasks=s.docs.map(d=>({...d.data(),id:d.id})).filter(t=>t.periodId===cur.id).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));render()},permErrL('danh sách nhiệm vụ của '+((viewUser||{}).fullName||''))));
 }
 const perm=()=>{const self=viewUid===me.id,s=docInfo.status,lk=cur.status==='locked';return{self,edit:self&&s==='DRAFT'&&!lk,mgr:!self&&s==='PENDING_MANAGER'&&!lk}};
 function catBadge(t){if(!t.kpiCode)return'<div class="text-[10px] text-slate-400 mb-0.5">Ngoài danh mục (nhiệm vụ phát sinh)</div>';const c=catFind(t.kpiCode),g=c?c.g:t.catGroup;return`<div class="text-[10px] font-bold text-sky-700 mb-0.5">${esc(t.kpiCode)}${g&&String(t.group)!==String(g)?` <span class="text-red-600">⚠ Danh mục: Nhóm ${g}</span>`:''}${c&&+t.axis!==c.x?` <span class="text-amber-600">⚠ Danh mục: Trục ${romanAx(c.x)}</span>`:''}</div>`}
@@ -750,13 +755,15 @@ function bbQuota(rows){const G={};rows.forEach(r=>{const x=G[r.g]=G[r.g]||{name:
  const groups=Object.values(G);groups.forEach(x=>{x.quota=Math.floor(x.htt*0.2+0.5+1e-9);x.elig.sort((a,b)=>b.d.kpi-a.d.kpi||(b.d.over/(b.d.n||1))-(a.d.over/(a.d.n||1))||(b.d.hard||0)-(a.d.hard||0));x.chosen=x.elig.slice(0,x.quota)});
  const ch=new Set();groups.forEach(x=>x.chosen.forEach(r=>ch.add(r.u.id)));
  rows.forEach(r=>r.final=!r.has?'':(ch.has(r.u.id)?RATE.X:(r.d.eligible?RATE.T:(r.d.rating||''))));return groups}
-async function bbTaskStats(){try{const s=await cref('kpi_tasks').where('periodId','==',cur.id).get(),m={};
- s.docs.forEach(x=>{const t=x.data(),o=m[t.userId]=m[t.userId]||{n:0,out:0,dev:0,noEv:0};o.n++;if(!t.kpiCode)o.out++;else{const c=catFind(t.kpiCode);if(c&&String(c.g)!==String(t.group))o.dev++}if(!t.evidenceUrl)o.noEv++});return m}catch(e){return null}}
+async function bbTaskStats(ids){try{const m={},docs=[];
+ if(['bgh','tk'].includes(me.role)){(await cref('kpi_tasks').where('periodId','==',cur.id).get()).docs.forEach(x=>docs.push(x))}
+ else for(const id of ids||[]){try{(await cref('kpi_tasks').where('userId','==',id).get()).docs.forEach(x=>{if(x.data().periodId===cur.id)docs.push(x)})}catch(e){}}
+ docs.forEach(x=>{const t=x.data(),o=m[t.userId]=m[t.userId]||{n:0,out:0,dev:0,noEv:0};o.n++;if(!t.kpiCode)o.out++;else{const c=catFind(t.kpiCode);if(c&&String(c.g)!==String(t.group))o.dev++}if(!t.evidenceUrl)o.noEv++});return m}catch(e){return null}}
 const pct=(a,b)=>b?f2(a/b*100):'0';
 
 async function bbToHtml(dept){
  const mem=bbMembers(dept).sort((a,b)=>(b.role==='tt')-(a.role==='tt')||(a.fullName||'').localeCompare(b.fullName||'','vi'));
- const R=mem.map(bbRow),ts=await bbTaskStats(),tt=mem.find(u=>u.role==='tt'),sub=R.filter(r=>r.d.status!=='DRAFT').length;
+ const R=mem.map(bbRow),ts=await bbTaskStats(mem.map(u=>u.id)),tt=mem.find(u=>u.role==='tt'),sub=R.filter(r=>r.d.status!=='DRAFT').length;
  const sum=k=>ts?R.reduce((a,r)=>a+((ts[r.u.id]||{})[k]||0),0):null,who=k=>ts?R.filter(r=>(ts[r.u.id]||{})[k]).map(r=>esc(r.u.fullName)+' ('+ts[r.u.id][k]+')').join('; '):'';
  const chk=[['Đủ hồ sơ: Bản kiểm điểm Mẫu 02B; Phụ lục 5; Phiếu chấm điểm KPI (Phụ lục II) có chữ ký; tài liệu minh chứng',`${sub}/${R.length} người đã nộp phiếu trên phần mềm`,R.filter(r=>r.d.status==='DRAFT').map(r=>esc(r.u.fullName)).join('; ')],
   ['Nhiệm vụ đăng ký đúng Danh mục KPI của trường (mã KPI, nhóm, trục); nhiệm vụ phát sinh có văn bản giao việc',ts?`${sum('out')} nhiệm vụ ngoài danh mục; ${sum('dev')} nhiệm vụ lệch nhóm danh mục`:'',ts?[who('out')&&'Ngoài danh mục: '+who('out'),who('dev')&&'Lệch nhóm: '+who('dev')].filter(Boolean).join('. '):''],
@@ -1076,7 +1083,7 @@ function m02Docx(){
 
 /* ===== Nhập nội dung Bản kiểm điểm 02A/02B ===== */
 function open02(){if(!viewUid)return toast('Chưa chọn phiếu!','warning');
- const u=tcU(),F=M02[isLeader(u)?'A':'B'],m=docInfo.m02||{},self=viewUid===me.id,okS=self&&docInfo.status!=='FINALIZED'&&cur.status!=='locked',okM=!self&&perm().mgr;
+ const u=tcU(),F=M02[isLeader(u)?'A':'B'],m=docInfo.m02||{},self=viewUid===me.id,okS=self&&(docInfo.status||'DRAFT')==='DRAFT'&&cur.status!=='locked',okM=!self&&perm().mgr;
  const ta=(k,lbl,ok,ph='')=>`<label class="block text-xs font-bold text-slate-700">${esc(lbl)}<textarea id="m02_${k}" rows="3" class="ti mt-1 text-sm ${ok?'':'ro'}" ${ok?'':'readonly'} placeholder="${esc(ph)}">${esc(m[k]||'')}</textarea></label>`;
  $('m02-title').textContent=`${F.mau.toUpperCase()} – ${u.fullName||''} (${cur.name||''})`;
  $('m02-body').innerHTML=`<p class="text-xs text-slate-500">Mỗi dòng là một đoạn văn. Phần B (điểm, mức xếp loại) phần mềm tự điền từ Phụ lục II và tiêu chí chung. ${isParty(u)?'Đảng viên: phiếu có thêm mục C.II và dòng Chi bộ '+CHI_BO+'.':'Chưa đánh dấu Đảng viên trong Hồ sơ cá nhân: phiếu không có mục đánh giá đảng viên.'}</p>
