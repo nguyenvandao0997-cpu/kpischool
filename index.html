@@ -142,6 +142,7 @@ tbody tr:hover td{background:#f8fbff}
    </form>
   </section>
 
+  <section id="v-sec" class="max-w-[1500px] mx-auto hide"><div id="sec-body" class="space-y-6"></div></section>
   <section id="v-catalog" class="max-w-[1500px] mx-auto hide"><div class="card p-6 space-y-3">
    <h2 class="sec"><i class="fas fa-book"></i> DANH MỤC NHIỆM VỤ KPI CHÍNH THỨC CỦA TRƯỜNG</h2>
    <p class="text-xs text-slate-500" id="cat-ver"></p>
@@ -234,7 +235,7 @@ tbody tr:hover td{background:#f8fbff}
  <footer class="hdr text-white py-2 px-4 text-center flex-shrink-0 text-xs font-semibold space-y-0.5">
   <div>TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG - KỶ CƯƠNG - NỀN NẾP - DẠY TỐT - HỌC TỐT</div>
   <div class="text-[11px] text-sky-200">Thôn 5 - xã Đức An - tỉnh Lâm Đồng</div>
-  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 4.9 (22/11/2026)</div>
+  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 5.0 (22/11/2026)</div>
  </footer>
 </div>
 
@@ -428,7 +429,7 @@ function start(uid,role){
   refreshDocs();renderPeriods();if(viewUid)loadView(viewUid)},er);
  cref('kpi_docs').onSnapshot(s=>{rawDocs=s.docs.map(d=>({...d.data(),_id:d.id}));refreshDocs()},er);
 }
-function refreshDocs(){allDocs=rawDocs.filter(d=>d.periodId===cur.id).map(d=>({...d,id:d.uid||d._id}));if(me&&!$('v-reports').classList.contains('hide'))renderReports()}
+function refreshDocs(){allDocs=rawDocs.filter(d=>d.periodId===cur.id).map(d=>({...d,id:d.uid||d._id}));if(me&&!$('v-reports').classList.contains('hide'))renderReports();if(me&&mode==='sec')renderSec()}
 function setPeriod(id){cur=periods.find(x=>x.id===id)||cur;refreshDocs();navTo(mode)}
 function enterApp(){$('u-name').textContent=me.fullName;$('u-role').textContent=(ROLES[me.role]||'')+(me.jobTitle?' · '+me.jobTitle:'');$('login').classList.add('hide');$('app').classList.remove('hide');buildNav();navTo(me.role==='admin'?'admin':'profile')}
 
@@ -443,18 +444,20 @@ function buildNav(){
  let t=[['profile','user-pen','Thông tin cá nhân'],['catalog','book','Danh mục KPI'],['register','sitemap','Đăng ký & Giao việc'],['self','clipboard-list','Tự đánh giá (PL II)']];
  if(can('grade'))t.push(['mgr','users-gear','Đánh giá cấp dưới']);
  if(can('reports'))t.push(['reports','chart-pie','Tổng hợp (PL III)']);
- if(me.role==='admin')t=[['admin','gears','Quản trị hệ thống'],['catalog','book','Danh mục KPI']];
+ if(['tk','bgh'].includes(me.role))t.push(['sec','folder-open','Hồ sơ Thư ký']);
+ if(me.role==='admin')t=[['admin','gears','Quản trị hệ thống'],['catalog','book','Danh mục KPI'],['sec','folder-open','Hồ sơ Thư ký']];
  $('nav').innerHTML=t.map(x=>`<div class="nt" id="t-${x[0]}" onclick="navTo('${x[0]}')"><i class="fas fa-${x[1]} mr-2"></i>${x[2]}</div>`).join('');
  $('assign-box').classList.toggle('hide',!(can('assign')&&subordinates().length));
  $('r-target').innerHTML='<option value="">-- Tự đăng ký cho bản thân --</option>'+subordinates().map(u=>`<option value="${u.id}">${esc(u.fullName)} (${esc(u.jobTitle||'GV')})</option>`).join('');
 }
 function navTo(n){
  document.querySelectorAll('.nt').forEach(e=>e.classList.remove('on'));$('t-'+n)?.classList.add('on');
- ['profile','catalog','register','kpi','reports','admin'].forEach(v=>$('v-'+v).classList.add('hide'));
+ ['profile','catalog','register','kpi','reports','admin','sec'].forEach(v=>$('v-'+v).classList.add('hide'));
  const v=(n==='self'||n==='mgr')?'kpi':n;$('v-'+v).classList.remove('hide');mode=n;
  if(n==='profile')fillProfile();
  if(n==='register')fillRegister();
  if(n==='catalog')initCatalog();
+ if(n==='sec'){secLoad();renderSec()}
  if(n==='self'){$('mgr-bar').classList.add('hide');$('mgr-bar').classList.remove('flex');loadView(me.id)}
  if(n==='mgr'){$('mgr-bar').classList.remove('hide');$('mgr-bar').classList.add('flex');$('f-user').innerHTML='<option value="">-- Chọn cấp dưới --</option>'+subordinates().map(u=>`<option value="${u.id}">${esc(u.fullName)} (${esc(u.jobTitle||'GV')}) - ${esc(u.dept||'')}</option>`).join('');loadView('')}
  if(n==='reports')renderReports();
@@ -897,12 +900,12 @@ const DX=(()=>{
     xml+=`<w:tc><w:tcPr>${tp}</w:tcPr>${inner||'<w:p/>'}</w:tc>`});xml+='</w:tr>'});
   return xml+'</w:tbl>'}
  // ô chữ ký 2 cột
- function sign(l,r,o={}){const cell=s=>({blocks:(s||'').split('\n').map((t,k)=>p(t,{al:'c',sz:o.sz||13,bf:0,af:0,ln:260})).join('')||'<w:p/>',va:'top'});
+ function sign(l,r,o={}){const cell=s=>{const nn=/Nơi nhận/.test(s||'');return{blocks:(s||'').split('\n').map((t,k)=>p(t,{al:nn?'l':'c',sz:nn?(k?11:12):(o.sz||13),bf:0,af:0,ln:nn?240:260})).join('')||'<w:p/>',va:'top'}};
   return tbl([[cell(l),cell(r)]],{w:o.w||[8.25,8.25],bd:false})}
  const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
  const crc=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crcT[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
  function zip(files){const enc=new TextEncoder(),parts=[],cen=[];let off=0;
-  files.forEach(([name,str])=>{const nb=enc.encode(name),db=enc.encode(str),c=crc(db),h=new DataView(new ArrayBuffer(30));
+  files.forEach(([name,str])=>{const nb=enc.encode(name),db=typeof str==='string'?enc.encode(str):str,c=crc(db),h=new DataView(new ArrayBuffer(30));
    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint32(10,0x00210000,true);h.setUint32(14,c,true);h.setUint32(18,db.length,true);h.setUint32(22,db.length,true);h.setUint16(26,nb.length,true);h.setUint16(28,0,true);
    parts.push(new Uint8Array(h.buffer),nb,db);
    const e=new DataView(new ArrayBuffer(46));e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint16(10,0,true);e.setUint32(12,0x00210000,true);e.setUint32(16,c,true);e.setUint32(20,db.length,true);e.setUint32(24,db.length,true);e.setUint16(28,nb.length,true);e.setUint32(42,off,true);
@@ -923,7 +926,7 @@ const DX=(()=>{
    ['docProps/core.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${X(o.title||'')}</dc:title><dc:creator>KPI SCHOOL</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created></cp:coreProperties>`],
    ['word/_rels/document.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/></Relationships>'],
    ['word/document.xml',doc],['word/styles.xml',sty],['word/settings.xml',set],['word/header1.xml',hdr]])}
- return{X,run,md,p,line,tbl,sign,build,TW}
+ return{X,run,md,p,line,tbl,sign,build,TW,zip}
 })();
 
 /* ===== Dữ liệu dùng chung cho các phiếu ===== */
@@ -1115,7 +1118,7 @@ function m02Docx(){
  return DX.build(body,{fs:14,title:F.mau+' - '+u.fullName})}
 
 /* ===== Nhập nội dung Bản kiểm điểm 02A/02B ===== */
-function open02(){if(!viewUid)return toast('Chưa chọn phiếu!','warning');
+function open02(){$('m02-save').onclick=save02;if(!viewUid)return toast('Chưa chọn phiếu!','warning');
  const u=tcU(),F=M02[isLeader(u)?'A':'B'],m=docInfo.m02||{},self=viewUid===me.id,okS=self&&(docInfo.status||'DRAFT')==='DRAFT'&&cur.status!=='locked',okM=!self&&perm().mgr;
  const ta=(k,lbl,ok,ph='')=>`<label class="block text-xs font-bold text-slate-700">${esc(lbl)}<textarea id="m02_${k}" rows="3" class="ti mt-1 text-sm ${ok?'':'ro'}" ${ok?'':'readonly'} placeholder="${esc(ph)}">${esc(m[k]||'')}</textarea></label>`;
  $('m02-title').textContent=`${F.mau.toUpperCase()} – ${u.fullName||''} (${cur.name||''})`;
@@ -1173,6 +1176,225 @@ async function doMove(){
   ok=true;
  }catch(e){wErr('Không chuyển được nhiệm vụ',e)}
  if(ok&&confirm(`Mở ngay ${tg.name} để kiểm tra?`)){try{$('period-sel').value=tgId;setPeriod(tgId)}catch(e){console.error(e)}}}
+
+/* ===== HỒ SƠ THƯ KÝ: theo dõi hồ sơ, tải hàng loạt, văn bản tổng hợp theo CV 6265/SGDĐT-TCCB ===== */
+let secInfo={},secUnsub=null,secLocal=false;
+const SEC_FIELDS=[
+ ['hnDate','Ngày hội nghị','date'],['hnTime','Giờ bắt đầu','text','14 giờ 00'],['hnPlace','Địa điểm','text','Hội trường Trường PTDTNT THCS và THPT Đắk Song'],
+ ['hnTotal','Tổng số CBVC, NLĐ','number'],['hnPresent','Số có mặt','number'],['hnAbsent','Vắng (họ tên, lý do)','text'],
+ ['secName','Thư ký hội nghị','text'],['phtChair','PHT chủ trì phần kiểm điểm Hiệu trưởng','text'],
+ ['ttrSo','Số Tờ trình','text','…/TTr-DTNTĐS'],['bbSo','Số Biên bản','text','…/BB-DTNTĐS'],['qdSo','Số Quyết định xếp loại viên chức','text','…/QĐ-DTNTĐS'],['vbDate','Ngày ban hành văn bản','date'],
+ ['ttChung','Tập thể: điểm tiêu chí chung (/30)','number'],['ttKpi','Tập thể: điểm KPI (/70)','number'],['ttRating','Tập thể tự xếp loại','rate'],['ttVote','Biểu quyết mức tập thể (tán thành/có mặt)','text','…/…'],
+ ['canCuQD','Căn cứ pháp lý đầu Quyết định (văn bản về chức năng, nhiệm vụ của trường)','text','Căn cứ Quyết định số …/QĐ-… ngày … của … quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Trường PTDTNT THCS và THPT Đắk Song;']];
+const SEC_CANCU='Căn cứ Quy định số 255-QĐ/TU ngày 20/11/2025, Hướng dẫn số 01-HD/TU ngày 24/6/2026, Công văn số 2769-CV/TU ngày 18/9/2026 và Công văn số 3343-CV/TU ngày 16/11/2026 của Ban Thường vụ Tỉnh ủy; Công văn số 1842-CV/BTCTU ngày 28/7/2026 của Ban Tổ chức Tỉnh ủy; Công văn số 7295/SNV-CCVC ngày 17/11/2026 của Sở Nội vụ; Công văn số 6265/SGDĐT-TCCB ngày 19/11/2026 của Sở Giáo dục và Đào tạo về hướng dẫn kiểm điểm, đánh giá, xếp loại chất lượng Quý IV và năm 2026;';
+const lcFirst=s=>s?String(s)[0].toLowerCase()+String(s).slice(1):'';
+const secKey=()=>'kpi_sec_'+cur.id;
+const sv=(k,d='')=>{const v=secInfo[k];return v===undefined||v===null||v===''?d:v};
+const dVN=s=>{if(!s)return'…/…/……';const[y,m,d]=String(s).split('-');return`${d}/${m}/${y}`};
+const ngayVBs=()=>{const s=sv('vbDate');return s?ngayVB(new Date(s+'T00:00:00')):'Đức An, ngày …… tháng …… năm '+new Date().getFullYear()};
+const secLeaders=()=>{const ht=htUser();return users.filter(u=>u.role==='bgh').sort((a,b)=>(b.id===(ht&&ht.id))-(a.id===(ht&&ht.id)))};
+const secStaff=()=>users.filter(u=>u.role!=='admin'&&!isLeader(u));
+const docOf=u=>allDocs.find(x=>x.id===u.id)||null;
+const secCanEdit=()=>['tk','bgh','admin'].includes(me.role)&&cur.status!=='locked';
+
+function secLoad(){if(secUnsub){secUnsub();secUnsub=null}secInfo={};secLocal=false;if(!cur.id)return;
+ secUnsub=dref('sec',cur.id).onSnapshot(s=>{secInfo=s.exists?s.data():{};secLocal=false;if(mode==='sec')renderSec()},e=>{
+  secLocal=true;try{secInfo=JSON.parse(localStorage.getItem(secKey())||'{}')}catch(x){secInfo={}}if(mode==='sec')renderSec()})}
+async function secSave(){const o={};SEC_FIELDS.forEach(([k,,t])=>{const el=$('sec_'+k);if(el)o[k]=t==='number'?(el.value===''?'':+el.value):el.value.trim()});
+ o.updatedBy=me.fullName||'';o.updatedAt=Date.now();
+ try{await dref('sec',cur.id).set(o,{merge:true});secLocal=false;toast('Đã lưu thông tin hồ sơ đợt đánh giá!');log('Thư ký cập nhật thông tin đợt',cur.name)}
+ catch(e){secInfo={...secInfo,...o};try{localStorage.setItem(secKey(),JSON.stringify(secInfo))}catch(x){}secLocal=true;
+  toast(e&&e.code==='permission-denied'?'Đã lưu tạm trên máy này. Để lưu chung cho cả trường, quản trị viên cần Publish Rules mới (thêm mục “sec”).':'Đã lưu tạm trên máy: '+(e.message||e),'warning')}}
+
+function secStatus(){return users.filter(u=>u.role!=='admin').map(u=>{const d=docOf(u)||{},lead=isLeader(u),m=d.m02||{};
+ return{u,d,lead,st:d.status||'DRAFT',n:d.n||0,tc:!!d.tcItems,m02:Object.values(m).some(v=>v&&String(v).trim()),mg:!!d.tcMgr||!!d.mgrComment,total:d.total,rating:d.rating}}).sort((a,b)=>(b.lead-a.lead)||(a.u.dept||'').localeCompare(b.u.dept||'','vi')||(a.u.fullName||'').localeCompare(b.u.fullName||'','vi'))}
+function renderSec(){const box=$('sec-body');if(!box)return;const ed=secCanEdit(),S=secStatus();
+ const ok=v=>v?'<span class="text-emerald-600 font-black">✓</span>':'<span class="text-red-500 font-black">✗</span>';
+ const ST={DRAFT:['Đang soạn','bg-slate-200'],PENDING_MANAGER:['Chờ duyệt','bg-amber-200'],FINALIZED:['Đã chốt','bg-emerald-200']};
+ const cnt=k=>S.filter(r=>r.st===k).length;
+ const fld=([k,l,t,ph])=>`<label class="text-xs font-bold text-slate-700">${esc(l)}${t==='rate'?`<select id="sec_${k}" class="ti mt-1 text-sm" ${ed?'':'disabled'}><option value="">-- Chọn --</option>${[RATE.X,RATE.T,RATE.H,RATE.K].map(v=>`<option ${sv(k)===v?'selected':''}>${v}</option>`).join('')}</select>`:`<input id="sec_${k}" type="${t}" class="ti mt-1 text-sm" ${ed?'':'readonly'} value="${esc(sv(k,k==='secName'?(me.role==='tk'?me.fullName:''):''))}" placeholder="${esc(ph||'')}">`}</label>`;
+ box.innerHTML=`
+ <div class="card p-6 space-y-3"><h2 class="sec"><i class="fas fa-folder-open"></i> 1. THÔNG TIN ĐỢT ĐÁNH GIÁ – ${esc(cur.name||'')}</h2>
+  <p class="text-xs text-slate-500">Các thông tin này được điền tự động vào Tờ trình, Biên bản, Mẫu 01, Quyết định. Chủ trì hội nghị: <b>${esc((htUser()||{}).fullName||'(chưa xác định Hiệu trưởng)')}</b>.${secLocal?' <b class="text-amber-700">Đang lưu tạm trên máy này (Rules chưa có mục “sec”).</b>':''}</p>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">${SEC_FIELDS.map(fld).join('')}</div>
+  ${ed?'<div class="text-right"><button class="b b1" onclick="secSave()"><i class="fas fa-save"></i> LƯU THÔNG TIN</button></div>':''}</div>
+ <div class="card p-6 space-y-3"><h2 class="sec"><i class="fas fa-file-signature"></i> 2. VĂN BẢN TỔNG HỢP CỦA NHÀ TRƯỜNG (tải .docx, đúng thể thức)</h2>
+  <div class="grid md:grid-cols-2 gap-3">${[
+   ['secTTr','Tờ trình đề nghị Sở xem xét, đánh giá, xếp loại','Thành phần (1) hồ sơ tập thể; kèm điểm, mức của tập thể và Hiệu trưởng, Phó Hiệu trưởng'],
+   ['secBB','Biên bản hội nghị kiểm điểm, đánh giá, xếp loại','Thành phần (2); tập thể, từng lãnh đạo và tổng hợp viên chức'],
+   ['secM01','Mẫu 01 – Báo cáo kiểm điểm tập thể','Thành phần (3); khung nội dung chính thức, phần B điền điểm tập thể'],
+   ['secPL01','Phụ lục 01A/01B – Kết quả nhiệm vụ tập thể','Thành phần (5); lập từ nhiệm vụ của Ban Giám hiệu (được chọn lọc)'],
+   ['secBieu','Biểu tổng hợp cá nhân thuộc thẩm quyền Giám đốc Sở','Hiệu trưởng, Phó Hiệu trưởng: điểm, mức tự xếp loại, mức đơn vị đề xuất'],
+   ['secQD','Quyết định xếp loại viên chức, người lao động (kèm danh sách)','Thẩm quyền Hiệu trưởng; lấy mức đơn vị đề xuất ở mục Tổng hợp'],
+   ['secDM','Danh mục thành phần hồ sơ gửi Phòng TCCB','Đối chiếu đủ thành phần theo mục IV Công văn 6265']].map(([f,t,d])=>`<div class="bg-white border rounded-xl p-3 flex items-center gap-3"><div class="flex-1"><div class="font-black text-sm text-sky-900">${t}</div><div class="text-xs text-slate-500">${d}</div></div><button class="b b2 !py-1.5 !text-xs whitespace-nowrap" onclick="${f}()"><i class="fas fa-file-word"></i> Tải .docx</button></div>`).join('')}
+   <div class="bg-sky-50 border border-sky-200 rounded-xl p-3 text-xs text-sky-900 md:col-span-2"><b>Đã có ở mục Tổng hợp (PL III):</b> Phụ lục III, Biên bản họp từng tổ, Biên bản họp xét cấp trường. <b>Ngoài phần mềm:</b> bảng chấm điểm KPI tập thể (CV 2769), Mẫu 6E1–6E4 (dùng nguyên tệp Excel của cơ quan có thẩm quyền), báo cáo giải trình (nếu có).</div></div></div>
+ <div class="card p-6 space-y-3"><div class="flex flex-wrap gap-3 items-center justify-between"><h2 class="sec !mb-0"><i class="fas fa-list-check"></i> 3. THEO DÕI HỒ SƠ CÁ NHÂN</h2>
+  <button class="b b1" onclick="secZip()"><i class="fas fa-file-zipper"></i> Tải toàn bộ hồ sơ cá nhân (.zip)</button></div>
+  <div class="text-xs font-bold">Tổng ${S.length} người · Đã chốt: <span class="text-emerald-700">${cnt('FINALIZED')}</span> · Chờ duyệt: <span class="text-amber-700">${cnt('PENDING_MANAGER')}</span> · Đang soạn: <span class="text-red-600">${cnt('DRAFT')}</span></div>
+  <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr><th>TT</th><th>Họ tên</th><th>Tổ</th><th>Mẫu</th><th>Phiếu</th><th>Số NV</th><th>Tự chấm TC chung</th><th>Bản kiểm điểm</th><th>Cấp trên chấm/nhận xét</th><th>Tổng</th><th>Mức theo phiếu</th><th></th></tr></thead><tbody>
+  ${S.map((r,i)=>`<tr><td class="text-center">${i+1}</td><td class="font-bold">${esc(r.u.fullName)}</td><td>${esc(r.u.dept||'')}</td><td class="text-center">${r.lead?'02A · PL8':'02B · PL5'}</td><td class="text-center"><span class="bd ${ST[r.st][1]}">${ST[r.st][0]}</span></td><td class="text-center">${r.n||'<span class="text-red-500 font-black">0</span>'}</td><td class="text-center">${ok(r.tc)}</td><td class="text-center">${ok(r.m02)}</td><td class="text-center">${r.lead?'—':ok(r.mg)}</td><td class="text-center font-bold">${r.total!=null?f2(r.total):''}</td><td>${esc(r.rating||'')}</td><td><button class="b b7 !py-1 !px-2 !text-[11px] whitespace-nowrap" onclick="secZip('${r.u.id}')"><i class="fas fa-download"></i> Hồ sơ</button></td></tr>`).join('')}</tbody></table></div>
+  <p class="text-[11px] text-slate-500">Mỗi bộ hồ sơ gồm: Mẫu 02A/02B (.docx), Phụ lục 8/Phụ lục 5 (.docx), Phiếu chấm điểm KPI – Phụ lục II (.doc). Dấu ✗ là phần cá nhân chưa làm trên phần mềm.</p></div>`}
+
+/* ---- Tải hàng loạt hồ sơ cá nhân ---- */
+async function secFetchTasks(ids){const out={};await Promise.all(ids.map(async id=>{try{const s=await cref('kpi_tasks').where('userId','==',id).get();out[id]=s.docs.map(x=>({id:x.id,...x.data()})).filter(t=>t.periodId===cur.id).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}catch(e){out[id]=null}}));return out}
+async function secZip(one){const L=one?users.filter(u=>u.id===one):users.filter(u=>u.role!=='admin');if(!L.length)return;
+ const t0=toast(`Đang lập hồ sơ cho ${L.length} người…`,'info',true);
+ try{const T=await secFetchTasks(L.map(u=>u.id)),files=[],miss=[];
+  const keep={viewUid,viewUser,docInfo,tasks};
+  try{L.forEach((u,i)=>{if(T[u.id]===null){miss.push(u.fullName);return}
+    viewUid=u.id;viewUser=u;docInfo={...newDoc(),...(allDocs.find(x=>x.id===u.id)||{})};tasks=T[u.id];
+    const lead=isLeader(u),dir=(one?'':String(i+1).padStart(2,'0')+'_'+slug(u.fullName)+'/'),nm=slug(u.fullName);
+    files.push([dir+(lead?'1_Mau_02A_':'1_Mau_02B_')+nm+'.docx',m02Docx()]);
+    files.push([dir+(lead?'2_PhuLuc_8_':'2_PhuLuc_5_')+nm+'.docx',lead?pl8Docx():pl5Docx()]);
+    files.push([dir+'3_PhuLuc_II_KPI_'+nm+'.doc',new TextEncoder().encode('\ufeff'+docHtml())])})}
+  finally{viewUid=keep.viewUid;viewUser=keep.viewUser;docInfo=keep.docInfo;tasks=keep.tasks}
+  const z=DX.zip(files),b=new Blob([z],{type:'application/zip'}),a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=(one?'HoSo_'+slug(L[0].fullName):'HoSo_ca_nhan_toan_truong')+'_'+slug(cur.name||'')+'.zip';a.click();
+  t0.remove();toast(`Đã tạo ${files.length} file.`+(miss.length?` Không đọc được dữ liệu của: ${miss.join(', ')}.`:''),miss.length?'warning':'success');log('Tải hồ sơ cá nhân',one?L[0].fullName:'Toàn trường')}
+ catch(e){t0.remove();wErr('Không tạo được hồ sơ',e)}}
+
+/* ---- Khung văn bản hành chính có số, trích yếu ---- */
+function secHead(so,ty){const L=[DX.p('SỞ GD&ĐT LÂM ĐỒNG',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('**TRƯỜNG PTDTNT THCS**',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('**VÀ THPT ĐẮK SONG**',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('',{al:'c',bb:true,li:2.3,ri:2.3,bf:0,af:0,ln:120}),DX.p('Số: '+so,{al:'c',sz:13,bf:60,af:0}),ty?DX.p(ty,{al:'c',sz:12,bf:0,af:0,raw:true}):''].join('');
+ const R=[DX.p('**CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM**',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('**Độc lập - Tự do - Hạnh phúc**',{al:'c',sz:14,bf:0,af:0,ln:240}),DX.p('',{al:'c',bb:true,li:1.9,ri:1.9,bf:0,af:0,ln:120}),DX.p('__'+ngayVBs()+'__',{al:'c',sz:14,bf:120,af:0})].join('');
+ return DX.tbl([[{blocks:L,va:'top'},{blocks:R,va:'top'}]],{w:[6.6,9.9],bd:false})}
+const P1=(t,o={})=>DX.p(t,{ind:1,...o}),PL=t=>DX.p(t,{ind:1,al:'l',raw:true});
+const secLeadRows=()=>{return secLeaders().map(u=>{const d=docOf(u)||{};return{u,d,total:d.total,self:d.rating||'',unit:d.unitProp||d.rating||''}})};
+const secStaffRows=()=>{const R=secStaff().map(bbRow);bbQuota(R);return R};
+const htName=()=>(htUser()||{}).fullName||'……………………';
+const secSaveDocx=(body,name,o={})=>saveBin(DX.build(body,{fs:14,...o}),`${name}_${slug(cur.name||'')}.docx`);
+
+function secTTr(){const LR=secLeadRows(),tc=(+sv('ttChung',0))+(+sv('ttKpi',0));
+ const rows=[[{t:'TT',b:true,al:'c',sh:'F2F2F2'},{t:'Họ và tên',b:true,al:'c',sh:'F2F2F2'},{t:'Chức vụ',b:true,al:'c',sh:'F2F2F2'},{t:'Tổng điểm tự chấm',b:true,al:'c',sh:'F2F2F2'},{t:'Mức tự xếp loại',b:true,al:'c',sh:'F2F2F2'},{t:'Tập thể đề xuất',b:true,al:'c',sh:'F2F2F2'}]]
+  .concat(LR.map((r,i)=>[{t:String(i+1),al:'c'},{t:r.u.fullName||''},{t:r.u.jobTitle||''},{t:r.total!=null?nf(r.total):'',al:'c'},{t:r.self},{t:r.unit}]));
+ const K=bbCount(secStaffRows(),r=>r.final);
+ const body=secHead(sv('ttrSo','…/TTr-DTNTĐS'),'V/v đề nghị xem xét, đánh giá, xếp loại chất lượng '+lcFirst(cur.name))
+  +DX.p('**TỜ TRÌNH**',{al:'c',bf:240,af:0})+DX.p(`**Đề nghị xem xét, đánh giá, xếp loại chất lượng ${lcFirst(cur.name)} đối với tập thể và cá nhân lãnh đạo, quản lý Trường PTDTNT THCS và THPT Đắk Song**`,{al:'c',bf:0,af:160})
+  +DX.p('Kính gửi: Sở Giáo dục và Đào tạo tỉnh Lâm Đồng (qua Phòng Tổ chức cán bộ).',{al:'c',af:160})
+  +P1(SEC_CANCU,{raw:true})+P1(`Căn cứ kết quả Hội nghị kiểm điểm, đánh giá, xếp loại chất lượng ${cur.name} của Trường PTDTNT THCS và THPT Đắk Song ngày ${dVN(sv('hnDate'))},`,{raw:true})
+  +P1('Trường PTDTNT THCS và THPT Đắk Song kính trình Sở Giáo dục và Đào tạo xem xét, đánh giá, xếp loại chất lượng như sau:')
+  +P1('**1. Đối với tập thể nhà trường**')+P1(`Tập thể tự chấm ${sv('ttChung')!==''||sv('ttKpi')!==''?nf(tc):'……'}/100 điểm (tiêu chí chung ${sv('ttChung','……')}/30; kết quả thực hiện nhiệm vụ ${sv('ttKpi','……')}/70); đề xuất xếp loại mức: **${sv('ttRating','……………………………')}**.`)
+  +P1('**2. Đối với cá nhân lãnh đạo, quản lý thuộc thẩm quyền Giám đốc Sở đánh giá, xếp loại**')+DX.tbl(rows,{w:[1,4.2,3,2.3,3.2,2.8],sz:12,hdr:1})
+  +P1('**3. Đối với viên chức, người lao động không giữ chức vụ lãnh đạo, quản lý**',{bf:120})+P1(`Hiệu trưởng đánh giá, xếp loại theo thẩm quyền tại Quyết định số ${sv('qdSo','……/QĐ-DTNTĐS')} ngày ${dVN(sv('vbDate'))}: tổng số ${secStaff().length} người; Hoàn thành xuất sắc nhiệm vụ: ${K.X}; Hoàn thành tốt nhiệm vụ: ${K.T}; Hoàn thành nhiệm vụ: ${K.H}; Không hoàn thành nhiệm vụ: ${K.K}${K.N?'; chưa đánh giá: '+K.N:''}.`)
+  +P1('**4. Hồ sơ gửi kèm**')+['- Biên bản hội nghị kiểm điểm, đánh giá, xếp loại;','- Báo cáo kiểm điểm, tự đánh giá, xếp loại tập thể (Mẫu 01) kèm phụ lục chấm điểm và minh chứng; bảng chấm điểm KPI tập thể; Phụ lục 01A, 01B;','- Hồ sơ của Hiệu trưởng, Phó Hiệu trưởng: Mẫu 02A, Phụ lục 8, phiếu chấm điểm KPI, Phụ lục 02A, 02B và tài liệu minh chứng;','- Biểu tổng hợp kết quả đánh giá, xếp loại cá nhân thuộc thẩm quyền xếp loại của Giám đốc Sở;','- Quyết định xếp loại viên chức, người lao động kèm danh sách;','- Báo cáo giải trình (nếu có).'].map(t=>P1(t,{raw:true})).join('')
+  +P1('Trường PTDTNT THCS và THPT Đắk Song kính trình Sở Giáo dục và Đào tạo xem xét, quyết định./.')
+  +DX.sign('**__Nơi nhận:__**\n- Như trên;\n- Lưu: VT.',`**HIỆU TRƯỞNG**\n\n\n\n\n**${htName()}**`);
+ secSaveDocx(body,'To_trinh_danh_gia_xep_loai');log('Thư ký tải văn bản','Tờ trình')}
+
+function secBB(){const LR=secLeadRows(),ht=htUser(),R=secStaffRows(),K=bbCount(R,r=>r.final),tc=(+sv('ttChung',0))+(+sv('ttKpi',0));
+ const dots=()=>P1('- ………………………………………………………………………………',{al:'l'});
+ let b=secHead(sv('bbSo','…/BB-DTNTĐS'))+DX.p('**BIÊN BẢN**',{al:'c',bf:240,af:0})+DX.p(`**Hội nghị kiểm điểm, đánh giá, xếp loại chất lượng ${cur.name}\nđối với tập thể và cá nhân Trường PTDTNT THCS và THPT Đắk Song**`,{al:'c',bf:0,af:160})
+  +PL(`Thời gian: ${sv('hnTime','…… giờ …… phút')}, ngày ${dVN(sv('hnDate'))}.`)+PL(`Địa điểm: ${sv('hnPlace','Hội trường Trường PTDTNT THCS và THPT Đắk Song')}.`)
+  +PL(`Thành phần: Tổng số cán bộ, viên chức, người lao động của đơn vị: ${sv('hnTotal','……')} người; có mặt: ${sv('hnPresent','……')} người; vắng: ${sv('hnTotal')!==''&&sv('hnPresent')!==''?(+sv('hnTotal')-(+sv('hnPresent'))):'……'} người${sv('hnAbsent')?' ('+sv('hnAbsent')+')':''}.`)
+  +PL(`Chủ trì: ${ht?(ht.fullName+' – Hiệu trưởng'):'……………………'}.          Thư ký: ${sv('secName','……………………')}.`)
+  +DX.p('**I. NỘI DUNG HỘI NGHỊ**',{al:'l'})+P1('**1. Kiểm điểm, đánh giá, xếp loại tập thể nhà trường**')
+  +P1(`${ht?ht.fullName:'Hiệu trưởng'} – Hiệu trưởng trình bày dự thảo Báo cáo kiểm điểm, tự đánh giá, xếp loại chất lượng tập thể (Mẫu 01), kết quả thực hiện nhiệm vụ (Phụ lục 01A, 01B) và bảng chấm điểm KPI tập thể.`,{raw:true})
+  +P1('Ý kiến tham gia:')+dots()+dots()
+  +P1(`Kết quả tự chấm điểm tập thể: ${sv('ttChung')!==''||sv('ttKpi')!==''?nf(tc):'……'}/100 điểm. Hội nghị biểu quyết đề xuất mức xếp loại tập thể: **${sv('ttRating','…………………………')}** với ${sv('ttVote','……/……')} ý kiến tán thành.`);
+ LR.forEach((r,i)=>{const isHT=ht&&r.u.id===ht.id;b+=P1(`**${i+2}. Kiểm điểm cá nhân ${r.u.jobTitle||''} ${r.u.fullName}**`,{raw:false})
+  +(isHT?P1(`Hội nghị phân công ${sv('phtChair','Ông/Bà ……………………… – Phó Hiệu trưởng')} chủ trì phần kiểm điểm Hiệu trưởng.`,{raw:true}):'')
+  +P1(`${r.u.fullName} trình bày Bản kiểm điểm cá nhân (Mẫu 02A), Phụ lục 8 và phiếu chấm điểm KPI: tự chấm ${r.total!=null?nf(r.total):'……'}/100 điểm; tự đề xuất mức: ${r.self||'…………………………'}.`,{raw:true})
+  +P1('Ý kiến góp ý:')+dots()+P1('Hội nghị thống nhất đề xuất mức: ………………………………… với …… /…… ý kiến tán thành.',{al:'l'})});
+ b+=P1(`**${LR.length+2}. Đánh giá, xếp loại viên chức, người lao động không giữ chức vụ lãnh đạo, quản lý**`)
+  +P1(`Các tổ chuyên môn, Tổ Văn phòng đã họp nhận xét, đề xuất (biên bản họp tổ kèm theo); hội nghị cấp trường đã xem xét, kiểm soát tỷ lệ. Tổng số được đánh giá: ${R.length} người; đề xuất: Hoàn thành xuất sắc nhiệm vụ: ${K.X}; Hoàn thành tốt nhiệm vụ: ${K.T}; Hoàn thành nhiệm vụ: ${K.H}; Không hoàn thành nhiệm vụ: ${K.K}${K.N?'; chưa đánh giá: '+K.N:''} (danh sách kèm theo Quyết định của Hiệu trưởng).`)
+  +DX.p('**II. KẾT LUẬN**',{al:'l'})+dots()+dots()
+  +P1('Hội nghị kết thúc vào lúc …… giờ …… phút cùng ngày. Biên bản đã được thông qua trước hội nghị, các thành viên dự họp thống nhất./.',{al:'l'})
+  +DX.sign(`**THƯ KÝ**\n\n\n\n\n**${sv('secName','')}**`,`**CHỦ TRÌ**\n\n\n\n\n**${htName()}**`);
+ secSaveDocx(b,'Bien_ban_hoi_nghi_danh_gia_xep_loai');log('Thư ký tải văn bản','Biên bản hội nghị')}
+
+const M01_I=['1. Việc chấp hành Cương lĩnh chính trị, Điều lệ Đảng, nghị quyết, chỉ thị, kết luận của Đảng, pháp luật của Nhà nước; nguyên tắc tổ chức và hoạt động của Đảng, nhất là nguyên tắc tập trung dân chủ; thực hiện quy chế làm việc.',
+ '2. Kết quả thực hiện các mục tiêu, chỉ tiêu, nhiệm vụ được đề ra trong nghị quyết đại hội nhiệm kỳ, kế hoạch, chương trình công tác năm, được cấp có thẩm quyền giao, phê duyệt và các nhiệm vụ phát sinh, đột xuất được cấp có thẩm quyền giao.',
+ '3. Công tác xây dựng, chỉnh đốn Đảng và hệ thống chính trị; xây dựng tổ chức bộ máy tinh gọn, hoạt động hiệu năng, hiệu lực, hiệu quả; tinh giản biên chế gắn với cải cách hành chính và chuyển đổi số; đấu tranh phòng, chống tham nhũng, lãng phí, quan liêu, tiêu cực và ngăn chặn, đẩy lùi sự suy thoái về tư tưởng chính trị, đạo đức, lối sống, "tự diễn biến", "tự chuyển hoá" trong nội bộ; công tác kiểm soát quyền lực, phòng, chống chạy chức, chạy quyền, lợi ích nhóm; xây dựng và thực hiện cơ chế công khai, minh bạch gắn với trách nhiệm giải trình trong công tác cán bộ; công tác kiểm tra, giám sát, kỷ luật đảng và công tác tiếp công dân, giải quyết đơn, thư, khiếu nại, tố cáo, kiến nghị, phản ánh của tổ chức, cá nhân.',
+ '4. Công tác lãnh đạo và định hướng tư tưởng của cán bộ, đảng viên và dư luận tại đơn vị. Kết quả ban hành văn bản chỉ đạo, hướng dẫn hằng năm về công tác chính trị, tư tưởng; xây dựng, triển khai thực hiện chương trình (hoặc kế hoạch) công tác chính trị, tư tưởng, bảo đảm tiến độ, chất lượng. Việc nắm bắt, dự báo, định hướng, xử lý kịp thời các vấn đề về tư tưởng thuộc phạm vi quản lý;',
+ '5. Thực hiện nghiêm trách nhiệm nêu gương theo quy định. Cấp ủy, người đứng đầu cấp ủy nói đi đôi với làm, làm đúng, hiệu quả. Cấp ủy viên chấp hành nghiêm các quy định về nêu gương, không có trường hợp vi phạm.',
+ '6. Thực hiện nghiêm kỷ luật phát ngôn. Quản lý, kiểm soát hiệu quả công tác tuyên truyền, kỷ luật phát ngôn và cung cấp thông tin, sử dụng các nền tảng số.',
+ '7. Lãnh đạo, chỉ đạo việc đẩy mạnh học tập, thực hành tư tưởng, đạo đức, phương pháp, phong cách Hồ Chí Minh.',
+ '8. Trách nhiệm của tập thể lãnh đạo, quản lý trong triển khai thực hiện các chủ trương, đường lối, nghị quyết, văn bản chỉ đạo của Đảng, của cấp trên; thực hiện nhiệm vụ chính trị của địa phương, tổ chức, cơ quan, đơn vị.'];
+function secM01(){const H=t=>DX.p('**'+t+'**',{ind:1,keep:true,bf:100}),HI=t=>DX.p(t,{ind:1,i:true,raw:true,keep:true}),D=n=>dots(n),rk=sv('ttRating'),tc=(+sv('ttChung',0))+(+sv('ttKpi',0)),has=sv('ttChung')!==''||sv('ttKpi')!=='';
+ const body=DX.p('**Mẫu 01**',{al:'r',sz:13,bf:0})+dxHead('',false)
+  +DX.p('**BÁO CÁO KIỂM ĐIỂM, TỰ ĐÁNH GIÁ, XẾP LOẠI CHẤT LƯỢNG**',{al:'c',bf:240,af:0})+DX.p('**CỦA TẬP THỂ TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG**',{al:'c',bf:0,af:0})+DX.p('**'+(cur.name||'')+'**',{al:'c',bf:0,af:160})
+  +P1('Căn cứ kết quả lãnh đạo, chỉ đạo thực hiện nhiệm vụ chính trị tại đơn vị; tập thể Trường PTDTNT THCS và THPT Đắk Song kiểm điểm, tự đánh giá, xếp loại chất lượng với các nội dung chủ yếu sau:')
+  +H('A. NỘI DUNG KIỂM ĐIỂM')+H('I. Ưu điểm, kết quả đạt được')+M01_I.map(t=>HI(t)+D(2)).join('')
+  +H('II. Hạn chế, khuyết điểm và nguyên nhân')+HI('- Hạn chế, khuyết điểm.')+D(2)+HI('- Nguyên nhân của hạn chế, khuyết điểm.')+D(2)
+  +H('III. Kết quả khắc phục những hạn chế, khuyết điểm đã được cấp có thẩm quyền kết luận hoặc được chỉ ra ở các kỳ kiểm điểm trước')+D(2)
+  +H('IV. Giải trình những vấn đề được gợi ý kiểm điểm (nếu có)')+D(1)+H('V. Trách nhiệm của tập thể, cá nhân')+D(2)+H('VI. Phương hướng, biện pháp khắc phục hạn chế, khuyết điểm')+D(2)
+  +H('B. NỘI DUNG TỰ ĐÁNH GIÁ, XẾP LOẠI')+H('I. Đánh giá theo các nhóm tiêu chí')
+  +P1('Trên cơ sở cụ thể hoá khung tiêu chí đánh giá đối với tập thể được quy định tại Phụ lục 1, Quy định số 366-QĐ/TW, các tập thể tự đánh giá, chấm điểm theo các tiêu chí được cụ thể hóa như sau:')
+  +P1(`1. Nhóm tiêu chí chung: **${sv('ttChung','…')}/30**`)+P1(`2. Nhóm tiêu chí về kết quả thực hiện nhiệm vụ: **${sv('ttKpi','…')}/70**`)+P1(`Tổng điểm: **${has?nf(tc):'…'}/100**`)
+  +H('II. Đề xuất xếp loại mức chất lượng:')+[RATE.X,RATE.T,RATE.H,RATE.K].map(t=>dxBox(t,rk===t)+DX.p('',{bf:0,af:40,ln:120})).join('')
+  +P1('__(Gửi kèm Phụ lục về kết quả thực hiện nhiệm vụ trong đó thể hiện sản phẩm tiến độ, chất lượng cụ thể - theo hướng dẫn của các cấp uỷ, tổ chức đảng)__',{sz:13})
+  +DX.sign('',`**T/M TẬP THỂ LÃNH ĐẠO, QUẢN LÝ**\n**HIỆU TRƯỞNG**\n__(Ký, ghi rõ họ tên và đóng dấu)__\n\n\n\n**${htName()}**`);
+ secSaveDocx(body,'Mau_01_Bao_cao_tap_the');log('Thư ký tải văn bản','Mẫu 01')}
+
+/* Phụ lục 01A/01B: chọn nhiệm vụ của Ban Giám hiệu */
+let pl01Cache=[];
+async function secPL01(){const LD=secLeaders();if(!LD.length)return toast('Chưa có tài khoản Ban Giám hiệu.','warning');
+ const T=await secFetchTasks(LD.map(u=>u.id));pl01Cache=[];LD.forEach(u=>(T[u.id]||[]).forEach(t=>pl01Cache.push({...t,owner:u.fullName})));
+ if(!pl01Cache.length)return toast(`Ban Giám hiệu chưa có nhiệm vụ nào trong ${cur.name}.`,'warning');
+ $('m02-title').textContent='PHỤ LỤC 01A/01B – CHỌN NHIỆM VỤ CỦA TẬP THỂ';
+ $('m02-body').innerHTML=`<p class="text-xs text-slate-600">Danh sách nhiệm vụ của Ban Giám hiệu trong ${esc(cur.name)}. Bỏ chọn nhiệm vụ không phải của nhà trường (ví dụ nhiệm vụ làm tại đơn vị cũ) hoặc trùng nhau.</p>`
+  +pl01Cache.map((t,i)=>`<label class="flex gap-2 items-start bg-white border rounded-xl p-2 text-sm"><input type="checkbox" class="pl01-c w-5 h-5 mt-0.5" value="${i}" ${/sở gd|tại sở/i.test((t.name||'')+(t.note||''))?'':'checked'}><div><b>${esc(t.name||'')}</b><div class="text-xs text-slate-500">${esc(t.owner)} · Trục ${romanAx(+t.axis||0)} · Hạn ${t.deadline?vd(t.deadline):'—'} · HT ${t.doneDate?vd(t.doneDate):'—'}</div></div></label>`).join('');
+ $('m02-save').classList.remove('hide');$('m02-save').onclick=()=>{const sel=[...document.querySelectorAll('.pl01-c')].filter(c=>c.checked).map(c=>pl01Cache[+c.value]);$('m02').classList.add('hide');$('m02-save').onclick=save02;secPL01Build(sel)};
+ $('m02').classList.remove('hide')}
+function secPL01Build(L){const yr=cur.type==='year',lv=t=>!t.doneDate?4:(t.exceed?1:((t.deadline&&t.doneDate>t.deadline)?3:2)),LV=['','Hoàn thành xuất sắc nhiệm vụ','Hoàn thành tốt nhiệm vụ','Hoàn thành nhiệm vụ','Không hoàn thành nhiệm vụ'];
+ L=[...L].sort((a,b)=>(+a.axis||0)-(+b.axis||0));const done=L.filter(t=>t.doneDate).length,rk=sv('ttRating'),H={sh:'F2F2F2',b:true,al:'c'};
+ const rows=[[{t:'TT',...H},{t:'Nhiệm vụ, công việc, chỉ tiêu chủ yếu',...H},{t:'Trục kết quả trọng tâm',...H},{t:'Sản phẩm/Kết quả theo kế hoạch',...H},{t:'Kết quả thực hiện',...H},{t:'Mức độ hoàn thành',...H},{t:'Ghi chú',...H}]]
+  .concat(L.map((t,i)=>[{t:String(i+1),al:'c'},{t:t.name||'',raw:true},{t:'Trục '+((+t.axis||0)+1),al:'c'},{t:t.product||'',raw:true},{t:t.doneDate?('Hoàn thành ngày '+vd(t.doneDate)+(t.qty?'; '+t.qty:'')):'Chưa hoàn thành',raw:true},{t:String(lv(t)),al:'c'},{t:t.note||'',raw:true}]));
+ const tbl3=[[{t:'TT',...H},{t:'Nội dung',...H},{t:'Nguyên nhân',...H},{t:'Giải pháp khắc phục',...H},{t:'Ghi chú',...H}],['1','','','',''],['2','','','','']];
+ const body=DX.p('**PHỤ LỤC '+(yr?'01B':'01A')+'**',{al:'c',bf:0,af:0})+DX.p(`__Kết quả thực hiện nhiệm vụ của tập thể ${lcFirst(cur.name)} – Trường PTDTNT THCS và THPT Đắk Song__`,{al:'c',af:160})
+  +DX.p('**I. KẾT QUẢ THỰC HIỆN NHIỆM VỤ, CÔNG VIỆC ĐƯỢC GIAO**',{al:'l'})+DX.tbl(rows,{w:[0.9,5.6,2.2,4.4,4.4,1.9,3.3],sz:11,hdr:1})
+  +DX.p('__Mức độ hoàn thành: 1- Hoàn thành xuất sắc nhiệm vụ; 2- Hoàn thành tốt nhiệm vụ; 3- Hoàn thành nhiệm vụ; 4- Không hoàn thành nhiệm vụ. 6 trục kết quả trọng tâm theo hướng dẫn của Ban Thường vụ Tỉnh ủy.__',{sz:11,ind:0})
+  +PL(`- Tổng số nhiệm vụ được giao: ${L.length}`)+PL(`- Hoàn thành: ${done}`)+PL(`- Chưa hoàn thành: ${L.length-done}`)+PL(`- Tỷ lệ hoàn thành: ${L.length?nf(done/L.length*100):0}%`)
+  +DX.p('**II. KẾT QUẢ NỔI BẬT**',{al:'l'})+PL('1. Kết quả nổi bật')+L.filter(t=>t.exceed).map(t=>PL('- '+t.name)).join('')+dots(1)+PL('2. Mô hình mới, cách làm sáng tạo, sản phẩm tiêu biểu (nếu có)')+dots(1)+PL(`3. Nhiệm vụ đột xuất hoàn thành trong ${yr?'năm':'quý'} (nếu có)`)+L.filter(t=>/đột xuất/i.test((t.note||'')+(t.name||''))).map(t=>PL('- '+t.name)).join('')+dots(1)
+  +DX.p('**III. HẠN CHẾ, TỒN TẠI**',{al:'l'})+DX.tbl(tbl3,{w:[1,7,6.5,6.5,3.5],sz:12,hdr:1})
+  +DX.p('**IV. TỰ ĐÁNH GIÁ MỨC ĐỘ HOÀN THÀNH NHIỆM VỤ**',{al:'l',bf:160})+[RATE.X,RATE.T,RATE.H,RATE.K].map(t=>dxBox(t,rk===t)+DX.p('',{bf:0,af:40,ln:120})).join('')
+  +DX.sign('',`**XÁC NHẬN CỦA TẬP THỂ LÃNH ĐẠO**\n**CƠ QUAN, ĐƠN VỊ**\n\n\n\n**${htName()}**`,{w:[12.85,12.85]});
+ secSaveDocx(body,yr?'Phu_luc_01B_tap_the':'Phu_luc_01A_tap_the',{land:true});log('Thư ký tải văn bản','Phụ lục 01A/01B')}
+
+function secBieu(){const LR=secLeadRows(),H={sh:'F2F2F2',b:true,al:'c'},ht=htUser(),K={};
+ const rows=[[{t:'TT',...H},{t:'Họ và tên',...H},{t:'Chức vụ, chức danh',...H},{t:'Nhóm đối tượng',...H},{t:'Tổng điểm',...H},{t:'Mức tự xếp loại',...H},{t:'Mức đơn vị đề xuất',...H},{t:'Kết quả do Giám đốc Sở quyết định',...H},{t:'Ghi chú',...H}]]
+  .concat(LR.map((r,i)=>{K[r.unit]=(K[r.unit]||0)+1;return[{t:String(i+1),al:'c'},{t:r.u.fullName||''},{t:r.u.jobTitle||''},{t:ht&&r.u.id===ht.id?'Người đứng đầu đơn vị sự nghiệp':'Cấp phó người đứng đầu đơn vị sự nghiệp'},{t:r.total!=null?nf(r.total):'',al:'c'},{t:r.self},{t:r.unit},{t:''},{t:''}]}));
+ const sum=[[{t:'Nội dung tổng hợp',...H},{t:'Số lượng',...H},{t:'Ghi chú',...H}]].concat([RATE.X,RATE.T,RATE.H,RATE.K].map(x=>[{t:x},{t:String(K[x]||0),al:'c'},{t:''}]));
+ const body=DX.p('**BIỂU TỔNG HỢP KẾT QUẢ ĐÁNH GIÁ, XẾP LOẠI CHẤT LƯỢNG '+(cur.name||'').toUpperCase()+'**',{al:'c',bf:0,af:0})+DX.p('**ĐỐI VỚI CÁ NHÂN THUỘC THẨM QUYỀN XẾP LOẠI CỦA GIÁM ĐỐC SỞ**',{al:'c',bf:0,af:0})+DX.p('__(Mẫu tổng hợp nội bộ của phòng, đơn vị gửi Văn phòng Sở)__',{al:'c',sz:12,af:120})
+  +PL('Đơn vị: Trường PTDTNT THCS và THPT Đắk Song')+DX.tbl(rows,{w:[1,4.2,3.4,4.2,1.8,3.2,3.2,3.2,2.5],sz:11,hdr:1})+DX.p('',{af:0})+DX.tbl(sum,{w:[10,4,9],sz:12,hdr:1,jc:'left'})
+  +DX.p('__Ghi chú: Chỉ tổng hợp cá nhân thuộc thẩm quyền xếp loại của Giám đốc Sở. Việc đề xuất "Hoàn thành xuất sắc nhiệm vụ" phải kiểm soát đúng điều kiện, tỷ lệ và nhóm đối tượng có vị trí, vai trò, chức năng, nhiệm vụ tương đồng.__',{sz:11,ind:0})
+  +DX.sign(`**NGƯỜI LẬP BIỂU**\n__(Ký, ghi rõ họ tên)__\n\n\n\n**${me.fullName||''}**`,`**THỦ TRƯỞNG ĐƠN VỊ**\n__(Ký, ghi rõ họ tên)__\n\n\n\n**${htName()}**`,{w:[12.85,12.85]});
+ secSaveDocx(body,'Bieu_tong_hop_ca_nhan_tham_quyen_GD_So',{land:true});log('Thư ký tải văn bản','Biểu tổng hợp GĐ Sở')}
+
+function secQD(){const R=secStaffRows().sort((a,b)=>(a.u.dept||'').localeCompare(b.u.dept||'','vi')||(a.u.fullName||'').localeCompare(b.u.fullName||'','vi')),K=bbCount(R,r=>r.final),so=sv('qdSo','……/QĐ-DTNTĐS'),H={sh:'F2F2F2',b:true,al:'c'};
+ const rows=[[{t:'TT',...H},{t:'Họ và tên',...H},{t:'Chức danh, vị trí việc làm',...H},{t:'Tổ',...H},{t:'Tổng điểm',...H},{t:'Mức xếp loại',...H},{t:'Ghi chú',...H}]]
+  .concat(R.map((r,i)=>[{t:String(i+1),al:'c'},{t:r.u.fullName||''},{t:r.u.jobTitle||'',raw:true},{t:r.u.dept||''},{t:r.has?nf(r.d.total):'',al:'c'},{t:r.final||'Chưa đánh giá'},{t:''}]));
+ const body=secHead(so)+DX.p('**QUYẾT ĐỊNH**',{al:'c',bf:240,af:0})+DX.p(`**Về việc đánh giá, xếp loại chất lượng viên chức, người lao động ${lcFirst(cur.name)}**`,{al:'c',bf:0,af:0})+DX.p('',{al:'c',bb:true,li:6.5,ri:6.5,bf:0,af:120,ln:120})
+  +DX.p('**HIỆU TRƯỞNG TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG**',{al:'c',af:120})
+  +P1(sv('canCuQD','Căn cứ Quyết định số …/QĐ-… ngày … của … quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Trường PTDTNT THCS và THPT Đắk Song;'),{raw:true,i:true})
+  +P1(SEC_CANCU,{raw:true,i:true})+P1(`Căn cứ biên bản họp các tổ và Biên bản họp xét, đánh giá, xếp loại chất lượng viên chức, người lao động ${cur.name} của nhà trường;`,{raw:true,i:true})
+  +P1('Theo đề nghị của Hội nghị xét, đánh giá, xếp loại chất lượng viên chức, người lao động nhà trường.',{i:true})
+  +DX.p('**QUYẾT ĐỊNH:**',{al:'c',bf:120,af:120})
+  +P1(`**Điều 1.** Xếp loại chất lượng ${lcFirst(cur.name)} đối với ${R.length} viên chức, người lao động không giữ chức vụ lãnh đạo, quản lý của Trường PTDTNT THCS và THPT Đắk Song (có danh sách kèm theo), cụ thể: Hoàn thành xuất sắc nhiệm vụ: ${K.X} người; Hoàn thành tốt nhiệm vụ: ${K.T} người; Hoàn thành nhiệm vụ: ${K.H} người; Không hoàn thành nhiệm vụ: ${K.K} người${K.N?'; chưa đánh giá: '+K.N+' người':''}.`)
+  +P1('**Điều 2.** Kết quả đánh giá, xếp loại chất lượng là căn cứ để thực hiện công tác thi đua, khen thưởng, bố trí, sử dụng, đào tạo, bồi dưỡng và thực hiện chế độ, chính sách đối với viên chức, người lao động theo quy định.')
+  +P1('**Điều 3.** Tổ trưởng các tổ chuyên môn, Tổ Văn phòng và các viên chức, người lao động có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này. Quyết định có hiệu lực kể từ ngày ký./.')
+  +DX.sign('**__Nơi nhận:__**\n- Như Điều 3;\n- Sở GD&ĐT (Phòng TCCB) (b/c);\n- Lưu: VT, hồ sơ viên chức.',`**HIỆU TRƯỞNG**\n\n\n\n\n**${htName()}**`)
+  +DX.p('**DANH SÁCH**',{al:'c',pb:true,bf:0,af:0})+DX.p(`**Xếp loại chất lượng viên chức, người lao động ${lcFirst(cur.name)}**`,{al:'c',bf:0,af:0})+DX.p(`__(Kèm theo Quyết định số ${so} ngày ${dVN(sv('vbDate'))} của Hiệu trưởng Trường PTDTNT THCS và THPT Đắk Song)__`,{al:'c',sz:13,af:120})
+  +DX.tbl(rows,{w:[0.9,4,4,2.8,1.5,3.3,1.5],sz:12,hdr:1});
+ secSaveDocx(body,'Quyet_dinh_xep_loai_vien_chuc');log('Thư ký tải văn bản','Quyết định xếp loại')}
+
+function secDM(){const S=secStatus(),LD=S.filter(r=>r.lead),VC=S.filter(r=>!r.lead),fin=a=>a.filter(r=>r.st==='FINALIZED').length,H={sh:'F2F2F2',b:true,al:'c'};
+ const it=[['A','**HỒ SƠ TẬP THỂ NHÀ TRƯỜNG** (06 thành phần theo Công văn số 7295/SNV-CCVC)','',''],
+  ['1','Tờ trình đề nghị xem xét, đánh giá, xếp loại','01 bản',sv('ttrSo')?'Số '+sv('ttrSo'):''],['2','Biên bản hội nghị','01 bản',sv('bbSo')?'Số '+sv('bbSo'):''],
+  ['3','Báo cáo kiểm điểm, tự đánh giá, xếp loại tập thể (Mẫu 01) kèm phụ lục chấm điểm tập thể (QĐ 255-QĐ/TU) và minh chứng','01 bộ',sv('ttRating')?'Tự xếp loại: '+sv('ttRating'):''],
+  ['4','Bảng chấm điểm KPI tập thể theo danh mục sản phẩm, công việc đã được phê duyệt (Công văn số 2769-CV/TU)','01 bản',''],
+  ['5','Kết quả thực hiện nhiệm vụ của tập thể Quý IV và năm (Phụ lục 01A, 01B)','01 bộ',''],['6','Báo cáo giải trình (nếu có)','',''],
+  ['B','**HỒ SƠ HIỆU TRƯỞNG, PHÓ HIỆU TRƯỞNG** (thẩm quyền Giám đốc Sở)','',''],
+  ...LD.map((r,i)=>[String(i+1),`${r.u.fullName} – ${r.u.jobTitle||''}: Mẫu 02A, Phụ lục 8, phiếu chấm điểm KPI, Phụ lục 02A, 02B, minh chứng`,'01 bộ',`Phiếu: ${{DRAFT:'đang soạn',PENDING_MANAGER:'chờ duyệt',FINALIZED:'đã chốt'}[r.st]}`]),
+  [String(LD.length+1),'Biểu tổng hợp kết quả đánh giá, xếp loại cá nhân thuộc thẩm quyền xếp loại của Giám đốc Sở','01 bản',''],
+  ['C','**HỒ SƠ VIÊN CHỨC, NGƯỜI LAO ĐỘNG** (thẩm quyền Hiệu trưởng)','',''],
+  ['1','Quyết định xếp loại chất lượng viên chức, người lao động kèm danh sách','01 bản',sv('qdSo')?'Số '+sv('qdSo'):''],
+  ['2','Biên bản họp các tổ; Biên bản họp xét cấp trường; Phụ lục III tổng hợp, kiểm soát tỷ lệ','01 bộ',''],
+  ['3','Hồ sơ cá nhân: Mẫu 02B, Phụ lục 05, bảng KPI và phụ lục kết quả thực hiện nhiệm vụ (Công văn số 1842-CV/BTCTU), minh chứng',`${VC.length} bộ`,`Đã chốt ${fin(VC)}/${VC.length}`]];
+ const rows=[[{t:'TT',...H},{t:'Thành phần hồ sơ',...H},{t:'Số lượng',...H},{t:'Ghi chú',...H}]].concat(it.map(x=>[{t:x[0],al:'c',b:/^[A-C]$/.test(x[0])},{t:x[1]},{t:x[2],al:'c'},{t:x[3]}]));
+ const body=secHead(sv('ttrSo')?'…/DM-DTNTĐS':'…/DM-DTNTĐS')+DX.p('**DANH MỤC THÀNH PHẦN HỒ SƠ**',{al:'c',bf:240,af:0})+DX.p(`**Đánh giá, xếp loại chất lượng ${lcFirst(cur.name)} gửi Phòng Tổ chức cán bộ, Sở GD&ĐT**`,{al:'c',bf:0,af:160})
+  +DX.tbl(rows,{w:[1.1,10.2,2,3.2],sz:12,hdr:1})+DX.p('__Lưu ý: Mẫu 6E1, 6E2, 6E3, 6E4 sử dụng nguyên tệp Excel do cơ quan có thẩm quyền ban hành. Hồ sơ gửi trước thời hạn theo Công văn số 6265/SGDĐT-TCCB.__',{sz:12,ind:0,bf:120})
+  +DX.sign(`**NGƯỜI LẬP**\n\n\n\n\n**${me.fullName||''}**`,`**HIỆU TRƯỞNG**\n\n\n\n\n**${htName()}**`);
+ secSaveDocx(body,'Danh_muc_ho_so_gui_TCCB');log('Thư ký tải văn bản','Danh mục hồ sơ')}
 
 /* ===== IMPORT HÀNG LOẠT ===== */
 function downloadUserTemplate(){saveFile("Họ và tên,Chức vụ,Vai trò,Tổ chuyên môn,Người quản lý trực tiếp\nNguyễn Trường Sinh,Tổ trưởng,tt,Tổ Khoa học Tự nhiên,\nNguyễn Văn A,Giáo viên,gv,Tổ Khoa học Tự nhiên,Nguyễn Trường Sinh",'text/csv;charset=utf-8;','Mau_Import_NhanSu.csv')}
