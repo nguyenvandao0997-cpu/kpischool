@@ -144,6 +144,7 @@ tbody tr:hover td{background:#f8fbff}
 
   <section id="v-sec" class="max-w-[1500px] mx-auto hide"><div id="sec-body" class="space-y-6"></div></section>
   <section id="v-catalog" class="max-w-[1500px] mx-auto hide"><div class="card p-6 space-y-3">
+   <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 space-y-2"><div class="font-black text-sky-900 text-sm"><i class="fas fa-book-bookmark"></i> VĂN BẢN CĂN CỨ ĐÁNH GIÁ, XẾP LOẠI</div><div id="ref-pub"></div></div>
    <h2 class="sec"><i class="fas fa-book"></i> DANH MỤC NHIỆM VỤ KPI CHÍNH THỨC CỦA TRƯỜNG</h2>
    <p class="text-xs text-slate-500" id="cat-ver"></p>
    <div class="grid sm:grid-cols-4 gap-2"><select id="c-role" class="ti" onchange="renderCatalog()"></select><select id="c-ax" class="ti" onchange="renderCatalog()"></select><select id="c-g" class="ti" onchange="renderCatalog()"><option value="">Tất cả các nhóm</option><option value="1">Nhóm 1 (100đ)</option><option value="2">Nhóm 2 (150đ)</option><option value="3">Nhóm 3 (200đ)</option><option value="4">Nhóm 4 (250đ)</option></select><input id="c-q" class="ti" placeholder="Tìm từ khóa, mã..." oninput="renderCatalog()"></div>
@@ -235,7 +236,7 @@ tbody tr:hover td{background:#f8fbff}
  <footer class="hdr text-white py-2 px-4 text-center flex-shrink-0 text-xs font-semibold space-y-0.5">
   <div>TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG - KỶ CƯƠNG - NỀN NẾP - DẠY TỐT - HỌC TỐT</div>
   <div class="text-[11px] text-sky-200">Thôn 5 - xã Đức An - tỉnh Lâm Đồng</div>
-  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 5.1 (22/11/2026)</div>
+  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 5.2 (22/11/2026)</div>
  </footer>
 </div>
 
@@ -456,7 +457,7 @@ function navTo(n){
  const v=(n==='self'||n==='mgr')?'kpi':n;$('v-'+v).classList.remove('hide');mode=n;
  if(n==='profile')fillProfile();
  if(n==='register')fillRegister();
- if(n==='catalog')initCatalog();
+ if(n==='catalog'){initCatalog();refLoad();refRender()}
  if(n==='sec'){secLoad();renderSec()}
  if(n==='self'){$('mgr-bar').classList.add('hide');$('mgr-bar').classList.remove('flex');loadView(me.id)}
  if(n==='mgr'){$('mgr-bar').classList.remove('hide');$('mgr-bar').classList.add('flex');$('f-user').innerHTML='<option value="">-- Chọn cấp dưới --</option>'+subordinates().map(u=>`<option value="${u.id}">${esc(u.fullName)} (${esc(u.jobTitle||'GV')}) - ${esc(u.dept||'')}</option>`).join('');loadView('')}
@@ -1233,7 +1234,10 @@ function renderSec(){const box=$('sec-body');if(!box)return;const ed=secCanEdit(
   <div class="text-xs font-bold">Tổng ${S.length} người · Đã chốt: <span class="text-emerald-700">${cnt('FINALIZED')}</span> · Chờ duyệt: <span class="text-amber-700">${cnt('PENDING_MANAGER')}</span> · Đang soạn: <span class="text-red-600">${cnt('DRAFT')}</span></div>
   <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr><th>TT</th><th>Họ tên</th><th>Tổ</th><th>Mẫu</th><th>Phiếu</th><th>Số NV</th><th>Tự chấm TC chung</th><th>Bản kiểm điểm</th><th>Cấp trên chấm/nhận xét</th><th>Tổng</th><th>Mức theo phiếu</th><th></th></tr></thead><tbody>
   ${S.map((r,i)=>`<tr><td class="text-center">${i+1}</td><td class="font-bold">${esc(r.u.fullName)}</td><td>${esc(r.u.dept||'')}</td><td class="text-center">${r.lead?'02A · PL8':'02B · PL5'}</td><td class="text-center"><span class="bd ${ST[r.st][1]}">${ST[r.st][0]}</span></td><td class="text-center">${r.n||'<span class="text-red-500 font-black">0</span>'}</td><td class="text-center">${ok(r.tc)}</td><td class="text-center">${ok(r.m02)}</td><td class="text-center">${r.lead?'—':ok(r.mg)}</td><td class="text-center font-bold">${r.total!=null?f2(r.total):''}</td><td>${esc(r.rating||'')}</td><td><button class="b b7 !py-1 !px-2 !text-[11px] whitespace-nowrap" onclick="secZip('${r.u.id}')"><i class="fas fa-download"></i> Hồ sơ</button></td></tr>`).join('')}</tbody></table></div>
-  <p class="text-[11px] text-slate-500">Mỗi bộ hồ sơ gồm: Mẫu 02A/02B (.docx), Phụ lục 8/Phụ lục 5 (.docx), Phiếu chấm điểm KPI – Phụ lục II (.doc). Dấu ✗ là phần cá nhân chưa làm trên phần mềm.</p></div>`}
+  <p class="text-[11px] text-slate-500">Mỗi bộ hồ sơ gồm: Mẫu 02A/02B (.docx), Phụ lục 8/Phụ lục 5 (.docx), Phiếu chấm điểm KPI – Phụ lục II (.doc). Dấu ✗ là phần cá nhân chưa làm trên phần mềm.</p></div>
+ <div class="card p-6 space-y-3"><div class="flex flex-wrap gap-3 items-center justify-between"><h2 class="sec !mb-0"><i class="fas fa-book-bookmark"></i> 4. VĂN BẢN CĂN CỨ (công văn, hướng dẫn, quy định, biểu mẫu)</h2>${refCan()?'<button class="b b1" onclick="refEdit()"><i class="fas fa-plus"></i> Thêm văn bản căn cứ</button>':''}</div>
+  <p class="text-xs text-slate-500">File được lưu trên Google Drive của trường; mọi cán bộ, giáo viên xem và tải tại mục <b>Danh mục KPI</b>. Văn bản đánh dấu ✓ được tự đưa vào phần “Căn cứ” của Tờ trình và Quyết định (theo thứ tự hiển thị).</p>
+  <div id="ref-sec"></div></div>`;refLoad();refRender()}
 
 /* ---- Tải hàng loạt hồ sơ cá nhân ---- */
 async function secFetchTasks(ids){const out={};await Promise.all(ids.map(async id=>{try{const s=await cref('kpi_tasks').where('userId','==',id).get();out[id]=s.docs.map(x=>({id:x.id,...x.data()})).filter(t=>t.periodId===cur.id).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))}catch(e){out[id]=null}}));return out}
@@ -1250,8 +1254,8 @@ async function secZip(one){const L=one?users.filter(u=>u.id===one):users.filter(
   finally{viewUid=keep.viewUid;viewUser=keep.viewUser;docInfo=keep.docInfo;tasks=keep.tasks}
   const z=DX.zip(files),b=new Blob([z],{type:'application/zip'}),a=document.createElement('a');a.href=URL.createObjectURL(b);
   a.download=(one?'HoSo_'+slug(L[0].fullName):'HoSo_ca_nhan_toan_truong')+'_'+slug(cur.name||'')+'.zip';a.click();
-  t0.remove();toast(`Đã tạo ${files.length} file.`+(miss.length?` Không đọc được dữ liệu của: ${miss.join(', ')}.`:''),miss.length?'warning':'success');log('Tải hồ sơ cá nhân',one?L[0].fullName:'Toàn trường')}
- catch(e){t0.remove();wErr('Không tạo được hồ sơ',e)}}
+  t0&&t0.remove&&t0.remove();toast(`Đã tạo ${files.length} file.`+(miss.length?` Không đọc được dữ liệu của: ${miss.join(', ')}.`:''),miss.length?'warning':'success');log('Tải hồ sơ cá nhân',one?L[0].fullName:'Toàn trường')}
+ catch(e){t0&&t0.remove&&t0.remove();wErr('Không tạo được hồ sơ',e)}}
 
 /* ---- Khung văn bản hành chính có số, trích yếu ---- */
 function secHead(so,ty){const L=[DX.p('SỞ GD&ĐT LÂM ĐỒNG',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('**TRƯỜNG PTDTNT THCS**',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('**VÀ THPT ĐẮK SONG**',{al:'c',sz:13,bf:0,af:0,ln:240}),DX.p('',{al:'c',bb:true,li:2.3,ri:2.3,bf:0,af:0,ln:120}),DX.p('Số: '+so,{al:'c',sz:13,bf:60,af:0}),ty?DX.p(ty,{al:'c',sz:12,bf:0,af:0,raw:true}):''].join('');
@@ -1270,7 +1274,7 @@ function secTTr(){const LR=secLeadRows(),tc=(+sv('ttChung',0))+(+sv('ttKpi',0));
  const body=secHead(sv('ttrSo','…/TTr-DTNTĐS'),'V/v đề nghị xem xét, đánh giá, xếp loại chất lượng '+lcFirst(cur.name))
   +DX.p('**TỜ TRÌNH**',{al:'c',bf:240,af:0})+DX.p(`**Đề nghị xem xét, đánh giá, xếp loại chất lượng ${lcFirst(cur.name)} đối với tập thể và cá nhân lãnh đạo, quản lý Trường PTDTNT THCS và THPT Đắk Song**`,{al:'c',bf:0,af:160})
   +DX.p('Kính gửi: Sở Giáo dục và Đào tạo tỉnh Lâm Đồng (qua Phòng Tổ chức cán bộ).',{al:'c',af:160})
-  +P1(SEC_CANCU,{raw:true})+P1(`Căn cứ kết quả Hội nghị kiểm điểm, đánh giá, xếp loại chất lượng ${cur.name} của Trường PTDTNT THCS và THPT Đắk Song ngày ${dVN(sv('hnDate'))},`,{raw:true})
+  +refBasis().split('\n').map(t=>P1(t,{raw:true})).join('')+P1(`Căn cứ kết quả Hội nghị kiểm điểm, đánh giá, xếp loại chất lượng ${cur.name} của Trường PTDTNT THCS và THPT Đắk Song ngày ${dVN(sv('hnDate'))},`,{raw:true})
   +P1('Trường PTDTNT THCS và THPT Đắk Song kính trình Sở Giáo dục và Đào tạo xem xét, đánh giá, xếp loại chất lượng như sau:')
   +P1('**1. Đối với tập thể nhà trường**')+P1(`Tập thể tự chấm ${sv('ttChung')!==''||sv('ttKpi')!==''?nf(tc):'……'}/100 điểm (tiêu chí chung ${sv('ttChung','……')}/30; kết quả thực hiện nhiệm vụ ${sv('ttKpi','……')}/70); đề xuất xếp loại mức: **${sv('ttRating','……………………………')}**.`)
   +P1('**2. Đối với cá nhân lãnh đạo, quản lý thuộc thẩm quyền Giám đốc Sở đánh giá, xếp loại**')+DX.tbl(rows,{w:[1,4.2,3,2.3,3.2,2.8],sz:12,hdr:1})
@@ -1366,7 +1370,7 @@ function secQD(){const R=secStaffRows().sort((a,b)=>(a.u.dept||'').localeCompare
  const body=secHead(so)+DX.p('**QUYẾT ĐỊNH**',{al:'c',bf:240,af:0})+DX.p(`**Về việc đánh giá, xếp loại chất lượng viên chức, người lao động ${lcFirst(cur.name)}**`,{al:'c',bf:0,af:0})+DX.p('',{al:'c',bb:true,li:6.5,ri:6.5,bf:0,af:120,ln:120})
   +DX.p('**HIỆU TRƯỞNG TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG**',{al:'c',af:120})
   +P1(sv('canCuQD','Căn cứ Quyết định số …/QĐ-… ngày … của … quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Trường PTDTNT THCS và THPT Đắk Song;'),{raw:true,i:true})
-  +P1(SEC_CANCU,{raw:true,i:true})+P1(`Căn cứ biên bản họp các tổ và Biên bản họp xét, đánh giá, xếp loại chất lượng viên chức, người lao động ${cur.name} của nhà trường;`,{raw:true,i:true})
+  +refBasis().split('\n').map(t=>P1(t,{raw:true,i:true})).join('')+P1(`Căn cứ biên bản họp các tổ và Biên bản họp xét, đánh giá, xếp loại chất lượng viên chức, người lao động ${cur.name} của nhà trường;`,{raw:true,i:true})
   +P1('Theo đề nghị của Hội nghị xét, đánh giá, xếp loại chất lượng viên chức, người lao động nhà trường.',{i:true})
   +DX.p('**QUYẾT ĐỊNH:**',{al:'c',bf:120,af:120})
   +P1(`**Điều 1.** Xếp loại chất lượng ${lcFirst(cur.name)} đối với ${R.length} viên chức, người lao động không giữ chức vụ lãnh đạo, quản lý của Trường PTDTNT THCS và THPT Đắk Song (có danh sách kèm theo), cụ thể: Hoàn thành xuất sắc nhiệm vụ: ${K.X} người; Hoàn thành tốt nhiệm vụ: ${K.T} người; Hoàn thành nhiệm vụ: ${K.H} người; Không hoàn thành nhiệm vụ: ${K.K} người${K.N?'; chưa đánh giá: '+K.N+' người':''}.`)
@@ -1480,6 +1484,49 @@ async function doImport(){const D=impData,sel=[...document.querySelectorAll('.im
   await b.commit();$('m02').classList.add('hide');$('m02-save').onclick=save02;
   toast(`Đã nhập ${k} nhiệm vụ${ch?' và điểm tiêu chí chung':''}.`);try{log('Nhập phiếu chấm điểm từ Excel',`${(viewUser||me).fullName}: ${k} NV từ ${D.file}`)}catch(x){console.error(x)}}
  catch(e){wErr('Không nhập được phiếu',e)}}
+
+/* ===== VĂN BẢN CĂN CỨ (thư ký cập nhật; mọi người xem, tải) ===== */
+let refDocs=[],refUnsub=null,refErr='';
+const REF_TYPES=['Công văn','Hướng dẫn','Quy định','Quyết định','Kế hoạch','Nghị quyết','Thông tư','Nghị định','Biểu mẫu','Khác'];
+const refCan=()=>['tk','bgh','admin'].includes(me&&me.role);
+function refLoad(){if(refUnsub)return;refUnsub=cref('ref_docs').onSnapshot(s=>{refErr='';refDocs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order??999)-(b.order??999)||String(b.date||'').localeCompare(String(a.date||'')));refRender()},e=>{refErr=e.code==='permission-denied'?'Rules chưa có mục “ref_docs”: quản trị viên cần Publish Rules mới.':(e.message||String(e));refRender()})}
+const refTitle=r=>`${r.type||'Văn bản'}${r.no?' số '+r.no:''}${r.date?' ngày '+dVN(r.date):''}${r.org?' của '+r.org:''}`;
+const refIcon=r=>{const n=(r.fileName||r.url||'').toLowerCase();return/\.pdf|pdf/.test(n)?'file-pdf text-red-600':/\.docx?|document/.test(n)?'file-word text-sky-700':/\.xlsx?|spreadsheet/.test(n)?'file-excel text-emerald-700':'link text-slate-500'};
+function refListHtml(edit){if(refErr)return`<p class="text-xs text-amber-700 font-bold">${esc(refErr)}</p>`;if(!refDocs.length)return'<p class="text-xs text-slate-400 italic">Chưa có văn bản căn cứ nào.</p>';
+ return`<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr><th>TT</th><th>Văn bản</th><th>Trích yếu</th><th>Căn cứ trong văn bản</th><th></th></tr></thead><tbody>${refDocs.map((r,i)=>`<tr><td class="text-center">${i+1}</td><td class="font-bold whitespace-nowrap"><i class="fas fa-${refIcon(r)} mr-1"></i>${esc(refTitle(r))}</td><td>${esc(r.title||'')}${r.fileName?`<div class="text-[10px] text-slate-400">${esc(r.fileName)}</div>`:''}</td><td class="text-center">${r.basis?'<span class="text-emerald-700 font-black">✓</span>':''}</td><td class="whitespace-nowrap">${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener" class="b b2 !py-1 !px-2 !text-[11px]"><i class="fas fa-up-right-from-square"></i> Mở</a>`:'<span class="text-slate-400">Chưa có file</span>'}${edit?` <button class="b b7 !py-1 !px-2 !text-[11px]" onclick="refEdit('${r.id}')"><i class="fas fa-pen"></i></button> <button class="b b7 !py-1 !px-2 !text-[11px] !text-red-600" onclick="refDel('${r.id}')"><i class="fas fa-trash"></i></button>`:''}</td></tr>`).join('')}</tbody></table></div>`}
+function refRender(){const a=$('ref-sec');if(a)a.innerHTML=refListHtml(refCan()&&me.role!=='gv');const b=$('ref-pub');if(b)b.innerHTML=refListHtml(false)}
+function refEdit(id){if(!refCan())return;const r=id?refDocs.find(x=>x.id===id)||{}:{order:refDocs.length+1,basis:true};
+ $('m02-title').textContent=id?'SỬA VĂN BẢN CĂN CỨ':'THÊM VĂN BẢN CĂN CỨ';
+ $('m02-body').innerHTML=`<div class="grid sm:grid-cols-2 gap-3 text-sm">
+  <label class="font-bold">Loại văn bản<select id="rf-type" class="ti mt-1">${REF_TYPES.map(t=>`<option ${r.type===t?'selected':''}>${t}</option>`).join('')}</select></label>
+  <label class="font-bold">Số, ký hiệu<input id="rf-no" class="ti mt-1" value="${esc(r.no||'')}" placeholder="VD: 6265/SGDĐT-TCCB"></label>
+  <label class="font-bold">Ngày ban hành<input id="rf-date" type="date" class="ti mt-1" value="${esc(r.date||'')}"></label>
+  <label class="font-bold">Cơ quan ban hành<input id="rf-org" class="ti mt-1" value="${esc(r.org||'')}" placeholder="VD: Sở Giáo dục và Đào tạo"></label>
+  <label class="font-bold sm:col-span-2">Trích yếu<textarea id="rf-title" rows="2" class="ti mt-1" placeholder="VD: về hướng dẫn kiểm điểm, đánh giá, xếp loại chất lượng Quý IV và năm 2026">${esc(r.title||'')}</textarea></label>
+  <label class="font-bold">Thứ tự hiển thị<input id="rf-order" type="number" class="ti mt-1" value="${r.order??''}"></label>
+  <label class="flex gap-2 items-center font-bold mt-6"><input type="checkbox" id="rf-basis" class="w-5 h-5" ${r.basis?'checked':''}> Đưa vào phần “Căn cứ” của Tờ trình, Quyết định</label>
+  <div class="sm:col-span-2 bg-slate-50 border rounded-xl p-3 space-y-2"><div class="font-bold">File văn bản (PDF, Word, Excel, ảnh – tối đa 8 MB)</div>
+   <div class="flex flex-wrap gap-2"><button type="button" class="b b2 !py-1.5 !text-xs" onclick="refUp()"><i class="fas fa-cloud-arrow-up"></i> Tải file lên Drive</button><span class="text-xs self-center">hoặc dán liên kết:</span></div>
+   <input id="rf-url" class="ti text-xs" value="${esc(r.url||'')}" placeholder="https://drive.google.com/..."><input type="hidden" id="rf-fname" value="${esc(r.fileName||'')}"><div id="rf-st" class="text-xs text-slate-500">${r.fileName?'File hiện tại: '+esc(r.fileName):''}</div></div></div>`;
+ $('m02-save').classList.remove('hide');$('m02-save').onclick=()=>refSave(id);$('m02').classList.remove('hide')}
+function refUp(){const i=document.createElement('input');i.type='file';i.accept='.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg';
+ i.onchange=()=>{const f=i.files[0];if(!f)return;if(f.size>8*1024*1024)return toast('File tối đa 8 MB! Hãy tải lên Google Drive rồi dán liên kết.','warning');
+  $('rf-st').textContent='Đang tải lên Drive: '+f.name+'…';const r=new FileReader();
+  r.onload=async()=>{try{const res=await fetch(GAS_API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'upload',fileName:f.name,mimeType:f.type||'application/octet-stream',fileData:r.result.split(',')[1]})});
+   const x=JSON.parse(await res.text());if(x.status==='success'&&x.fileUrl){$('rf-url').value=x.fileUrl;$('rf-fname').value=f.name;$('rf-st').textContent='Đã tải lên: '+f.name+' – bấm LƯU để hoàn tất.'}else throw new Error(x.message||'không rõ')}
+   catch(e){$('rf-st').textContent='Không tải lên được ('+e.message+'). Hãy dán liên kết.';toast('Không tải lên được file: '+e.message,'error')}};
+  r.readAsDataURL(f)};i.click()}
+async function refSave(id){const url=$('rf-url').value.trim();if(url&&!/^https?:\/\//i.test(url))return toast('Liên kết phải bắt đầu bằng http:// hoặc https://','warning');
+ const o={type:$('rf-type').value,no:$('rf-no').value.trim(),date:$('rf-date').value,org:$('rf-org').value.trim(),title:$('rf-title').value.trim(),order:$('rf-order').value===''?999:+$('rf-order').value,basis:$('rf-basis').checked,url,fileName:$('rf-fname').value||(url?'':''),updatedBy:me.fullName||'',updatedAt:Date.now()};
+ if(!o.no&&!o.title)return toast('Nhập ít nhất số hiệu hoặc trích yếu.','warning');
+ try{if(id)await cref('ref_docs').doc(id).set(o,{merge:true});else await cref('ref_docs').add({...o,createdAt:Date.now()});
+  $('m02').classList.add('hide');$('m02-save').onclick=save02;toast('Đã lưu văn bản căn cứ!');try{log('Cập nhật văn bản căn cứ',refTitle(o))}catch(x){}}
+ catch(e){toast(e.code==='permission-denied'?'Rules chưa cho lưu văn bản căn cứ: quản trị viên cần Publish Rules mới (mục “ref_docs”).':'Lỗi: '+(e.message||e),'error')}}
+async function refDel(id){const r=refDocs.find(x=>x.id===id);if(!r||!confirm(`Xóa “${refTitle(r)}” khỏi danh sách văn bản căn cứ?\n(File trên Google Drive không bị xóa.)`))return;
+ try{await cref('ref_docs').doc(id).delete();toast('Đã xóa!');try{log('Xóa văn bản căn cứ',refTitle(r))}catch(x){}}catch(e){toast('Lỗi xóa: '+(e.code||e.message),'error')}}
+// Dòng "Căn cứ" dùng trong Tờ trình, Quyết định: nếu thư ký đã đánh dấu văn bản thì lấy theo danh sách, nếu chưa thì dùng mặc định
+function refBasis(){const L=refDocs.filter(r=>r.basis);if(!L.length)return SEC_CANCU;
+ return L.map(r=>`Căn cứ ${refTitle(r)}${r.title?' '+r.title.replace(/^về\s+/i,'về '):''};`).join('\n')}
 
 /* ===== IMPORT HÀNG LOẠT ===== */
 function downloadUserTemplate(){saveFile("Họ và tên,Chức vụ,Vai trò,Tổ chuyên môn,Người quản lý trực tiếp\nNguyễn Trường Sinh,Tổ trưởng,tt,Tổ Khoa học Tự nhiên,\nNguyễn Văn A,Giáo viên,gv,Tổ Khoa học Tự nhiên,Nguyễn Trường Sinh",'text/csv;charset=utf-8;','Mau_Import_NhanSu.csv')}
