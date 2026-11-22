@@ -176,7 +176,7 @@ tbody tr:hover td{background:#f8fbff}
      </div>
      <label class="text-sm font-bold block">Sản phẩm nổi trội / vượt mức (bắt buộc nếu đề xuất HTXS)<textarea id="s-note" rows="3" class="ti mt-1" onchange="saveNote(this.value)"></textarea></label>
      <div id="s-quarters" class="hide p-3 rounded-xl bg-slate-50 border"></div>
-     <div class="grid grid-cols-2 gap-2"><button onclick="previewDoc()" class="b b1"><i class="fas fa-eye"></i> Xem trước Phụ lục II</button><button onclick="downloadDoc()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục II (.doc)</button><button onclick="previewTc()" class="b b5"><i class="fas fa-eye"></i> Xem trước PL5/PL8</button><button id="btn-tc" onclick="downloadTcDocx()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục 5 (.docx)</button><button onclick="open02()" class="b b6"><i class="fas fa-pen-to-square"></i> <span id="btn-02e">Soạn Bản kiểm điểm 02B</span></button><button onclick="download02()" class="b b3"><i class="fas fa-file-word"></i> <span id="btn-02d">Tải Mẫu 02B (.docx)</span></button></div>
+     <div class="grid grid-cols-2 gap-2"><button onclick="openMove()" class="b b7 col-span-2 !bg-amber-100 !text-amber-900 border border-amber-300"><i class="fas fa-right-left"></i> Nhập nhầm kỳ? Chuyển nhiệm vụ sang kỳ khác</button><button onclick="previewDoc()" class="b b1"><i class="fas fa-eye"></i> Xem trước Phụ lục II</button><button onclick="downloadDoc()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục II (.doc)</button><button onclick="previewTc()" class="b b5"><i class="fas fa-eye"></i> Xem trước PL5/PL8</button><button id="btn-tc" onclick="downloadTcDocx()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục 5 (.docx)</button><button onclick="open02()" class="b b6"><i class="fas fa-pen-to-square"></i> <span id="btn-02e">Soạn Bản kiểm điểm 02B</span></button><button onclick="download02()" class="b b3"><i class="fas fa-file-word"></i> <span id="btn-02d">Tải Mẫu 02B (.docx)</span></button></div>
     </div>
     <div class="card p-6 flex flex-col lg:col-span-2">
      <p class="text-[11px] font-bold text-slate-400 uppercase text-center tracking-widest">Mức xếp loại tự đề xuất</p>
@@ -234,7 +234,7 @@ tbody tr:hover td{background:#f8fbff}
  <footer class="hdr text-white py-2 px-4 text-center flex-shrink-0 text-xs font-semibold space-y-0.5">
   <div>TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG - KỶ CƯƠNG - NỀN NẾP - DẠY TỐT - HỌC TỐT</div>
   <div class="text-[11px] text-sky-200">Thôn 5 - xã Đức An - tỉnh Lâm Đồng</div>
-  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 4.8 (22/11/2026)</div>
+  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 4.9 (22/11/2026)</div>
  </footer>
 </div>
 
@@ -251,6 +251,20 @@ tbody tr:hover td{background:#f8fbff}
   <div class="hdr text-white p-4 font-black flex justify-between"><span id="m02-title">BẢN KIỂM ĐIỂM</span><button onclick="$('m02').classList.add('hide')">✕</button></div>
   <div class="p-5 space-y-3 bg-slate-50 max-h-[70vh] overflow-y-auto" id="m02-body"></div>
   <div class="p-4 flex justify-end gap-2 border-t"><button onclick="$('m02').classList.add('hide')" class="b b7">Đóng</button><button id="m02-save" onclick="save02()" class="b b1">LƯU</button></div>
+ </div>
+</div>
+
+<div id="mv" class="hide fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4">
+ <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+  <div class="hdr text-white p-4 font-black flex justify-between"><span id="mv-title">CHUYỂN NHIỆM VỤ</span><button onclick="$('mv').classList.add('hide')">✕</button></div>
+  <div class="p-5 space-y-3 bg-slate-50 max-h-[70vh] overflow-y-auto">
+   <div class="grid sm:grid-cols-2 gap-3 text-sm"><div><span class="font-bold">Từ kỳ:</span> <span id="mv-src" class="font-black text-red-700"></span></div><label class="font-bold">Sang kỳ: <select id="mv-target" class="ti mt-1" onchange="mvList()"></select></label></div>
+   <p class="text-xs text-slate-600">Đánh dấu các nhiệm vụ nhập nhầm. Phần mềm tự đánh dấu sẵn nhiệm vụ có hạn hoặc ngày hoàn thành thuộc kỳ đích; nhiệm vụ đúng của kỳ hiện tại thì <b>bỏ đánh dấu</b>. Minh chứng, điểm, ghi chú của nhiệm vụ được giữ nguyên.</p>
+   <div class="flex gap-2 text-xs"><button type="button" class="b b7 !py-1" onclick="mvAll(true)">Chọn tất cả</button><button type="button" class="b b7 !py-1" onclick="mvAll(false)">Bỏ chọn tất cả</button><span class="ml-auto font-bold self-center">Đã chọn: <span id="mv-n">0</span></span></div>
+   <div id="mv-list" class="space-y-2"></div>
+   <label class="flex gap-2 items-start text-sm bg-amber-50 border border-amber-200 rounded-xl p-3"><input type="checkbox" id="mv-carry" class="w-5 h-5 mt-0.5" checked><span>Chuyển kèm phần <b>tự chấm tiêu chí chung</b>, <b>Bản kiểm điểm 02A/02B</b> và <b>sản phẩm nổi trội</b> sang kỳ đích (chỉ chép những mục kỳ đích còn trống, không ghi đè).</span></label>
+  </div>
+  <div class="p-4 flex justify-end gap-2 border-t"><button onclick="$('mv').classList.add('hide')" class="b b7">Hủy</button><button id="mv-go" onclick="doMove()" class="b b1"><i class="fas fa-right-left"></i> CHUYỂN</button></div>
  </div>
 </div>
 
@@ -1117,6 +1131,48 @@ async function save02(){const u=tcU(),F=M02[isLeader(u)?'A':'B'],self=viewUid===
  try{await kset(viewUid,o);log('Soạn bản kiểm điểm',F.mau);$('m02').classList.add('hide');toast('Đã lưu bản kiểm điểm!')}catch(e){toast('Lỗi ('+(e.code||'')+'): '+e.message,'error')}}
 function downloadTcDocx(){const b=isLeader(viewUser||me)?pl8Docx():pl5Docx();if(!b)return toast('Chưa chọn phiếu!','warning');saveBin(b,`${isLeader(viewUser||me)?'PhuLuc_8':'PhuLuc_5'}_${slug((viewUser||me).fullName)}_${slug(cur.name||'')}.docx`)}
 function download02(){const b=m02Docx();if(!b)return toast('Chưa chọn phiếu!','warning');saveBin(b,`${isLeader(viewUser||me)?'Mau_02A':'Mau_02B'}_${slug((viewUser||me).fullName)}_${slug(cur.name||'')}.docx`)}
+
+/* ===== CHUYỂN NHIỆM VỤ SANG KỲ KHÁC (sửa nhầm kỳ) ===== */
+const QMON={I:[1,3],II:[4,6],III:[7,9],IV:[10,12]};
+function periodRange(p){const m=(p&&p.name||'').match(/Quý\s+(IV|III|II|I)\s+năm\s+(\d{4})/i);if(m){const r=QMON[m[1].toUpperCase()];return{y:+m[2],a:r[0],b:r[1]}}
+ const y=(p&&p.name||'').match(/năm\s+(\d{4})/i);return y?{y:+y[1],a:1,b:12}:null}
+const inRange=(d,R)=>{if(!d||!R)return false;const x=new Date(d);return!isNaN(x)&&x.getFullYear()===R.y&&x.getMonth()+1>=R.a&&x.getMonth()+1<=R.b};
+function openMove(){if(!viewUid||!cur.id)return toast('Chưa chọn phiếu!','warning');
+ const u=viewUser||me,self=viewUid===me.id,st=docInfo.status||'DRAFT';
+ if(!tasks.length)return toast(`Kỳ ${cur.name} không có nhiệm vụ nào để chuyển.`,'warning');
+ if(st==='FINALIZED')return toast(`Phiếu ${cur.name} của ${u.fullName} đã CHỐT, không chuyển được. Nhờ Hiệu trưởng/người duyệt mở lại (trả về) trước.`,'error');
+ if(self&&st!=='DRAFT')return toast(`Phiếu ${cur.name} đã nộp. Nhờ người duyệt bấm “Trả lại cấp dưới sửa” rồi mới chuyển được, hoặc người duyệt thực hiện chuyển giúp.`,'warning');
+ const tg=periods.filter(p=>p.id!==cur.id&&p.status!=='locked');if(!tg.length)return toast('Không có kỳ đánh giá nào khác đang mở để chuyển sang.','warning');
+ const nx=tg.find(p=>(p.startAt||0)>(cur.startAt||0))||tg[0];
+ $('mv-title').textContent=`CHUYỂN NHIỆM VỤ – ${u.fullName||''}`;
+ $('mv-target').innerHTML=tg.map(p=>`<option value="${p.id}" ${p.id===nx.id?'selected':''}>${esc(p.name)}</option>`).join('');
+ $('mv-src').textContent=cur.name;mvList();$('mv').classList.remove('hide')}
+function mvList(){const R=periodRange(periods.find(p=>p.id===$('mv-target').value));
+ $('mv-list').innerHTML=tasks.map(t=>{const hit=inRange(t.doneDate,R)||inRange(t.deadline,R);
+  return`<label class="flex gap-3 items-start bg-white border rounded-xl p-2 ${hit?'border-sky-300':''}"><input type="checkbox" class="mv-c w-5 h-5 mt-0.5" value="${t.id}" ${hit?'checked':''} onchange="mvCount()"><div class="text-sm"><b>${esc(t.name||'')}</b>${t.kpiCode?` <span class="text-[10px] text-sky-700 font-bold">${esc(t.kpiCode)}</span>`:''}<div class="text-xs text-slate-500">Nhóm ${t.group||''} · Hạn: ${t.deadline?vd(t.deadline):'—'} · Hoàn thành: ${t.doneDate?vd(t.doneDate):'—'}${hit?' · <b class="text-sky-700">thời gian thuộc kỳ đích</b>':''}</div></div></label>`}).join('');mvCount()}
+function mvAll(v){document.querySelectorAll('.mv-c').forEach(c=>c.checked=v);mvCount()}
+function mvCount(){const n=[...document.querySelectorAll('.mv-c')].filter(c=>c.checked).length;$('mv-n').textContent=n;$('mv-go').disabled=!n}
+async function doMove(){
+ const ids=[...document.querySelectorAll('.mv-c')].filter(c=>c.checked).map(c=>c.value),tgId=$('mv-target').value,tg=periods.find(p=>p.id===tgId),uid=viewUid,u=viewUser||me,self=uid===me.id;
+ if(!ids.length||!tg)return;let ok=false;
+ try{
+  const tref=dref('kpi_docs',tgId+'~'+uid),ts=await tref.get(),td=ts.exists?ts.data():null,tst=(td&&td.status)||'DRAFT';
+  if(tst==='FINALIZED')return toast(`Phiếu ${tg.name} của ${u.fullName} đã chốt, không nhận thêm nhiệm vụ được.`,'error');
+  if(self&&tst!=='DRAFT')return toast(`Phiếu ${tg.name} đã nộp; nhờ người duyệt trả lại trước khi chuyển.`,'warning');
+  const all=ids.length===tasks.length,carry=$('mv-carry').checked;
+  if(!confirm(`Chuyển ${ids.length} nhiệm vụ của ${u.fullName} từ ${cur.name} sang ${tg.name}?${all?'\n\nKỳ '+cur.name+' sẽ không còn nhiệm vụ nào.':''}`))return;
+  const b=db.batch(),now=Date.now();
+  ids.forEach(id=>b.update(cref('kpi_tasks').doc(id),{periodId:tgId,movedFrom:cur.id,movedAt:now,movedBy:me.fullName||''}));
+  const o={status:tst,uid,periodId:tgId};
+  if(carry){['tcItems','tcForm','extraSelf','m02','note'].forEach(k=>{if(docInfo[k]!==undefined&&docInfo[k]!==''&&!(td&&td[k]!==undefined&&td[k]!==''))o[k]=docInfo[k]});
+   if(docInfo.tcItems&&!(td&&td.tcItems)&&!(td&&td.tcMgr)){o.generalScore=selfGen(u,docInfo);o.extraDeduct=selfEx(docInfo)}}
+  b.set(tref,o,{merge:true});
+  await b.commit();
+  log('Chuyển nhiệm vụ sang kỳ khác',`${u.fullName}: ${ids.length} NV từ ${cur.name} sang ${tg.name}`);
+  $('mv').classList.add('hide');toast(`Đã chuyển ${ids.length} nhiệm vụ sang ${tg.name}!`);
+  ok=true;
+ }catch(e){wErr('Không chuyển được nhiệm vụ',e)}
+ if(ok&&confirm(`Mở ngay ${tg.name} để kiểm tra?`)){try{$('period-sel').value=tgId;setPeriod(tgId)}catch(e){console.error(e)}}}
 
 /* ===== IMPORT HÀNG LOẠT ===== */
 function downloadUserTemplate(){saveFile("Họ và tên,Chức vụ,Vai trò,Tổ chuyên môn,Người quản lý trực tiếp\nNguyễn Trường Sinh,Tổ trưởng,tt,Tổ Khoa học Tự nhiên,\nNguyễn Văn A,Giáo viên,gv,Tổ Khoa học Tự nhiên,Nguyễn Trường Sinh",'text/csv;charset=utf-8;','Mau_Import_NhanSu.csv')}
