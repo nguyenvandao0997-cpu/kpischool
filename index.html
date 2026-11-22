@@ -177,7 +177,7 @@ tbody tr:hover td{background:#f8fbff}
      </div>
      <label class="text-sm font-bold block">Sản phẩm nổi trội / vượt mức (bắt buộc nếu đề xuất HTXS)<textarea id="s-note" rows="3" class="ti mt-1" onchange="saveNote(this.value)"></textarea></label>
      <div id="s-quarters" class="hide p-3 rounded-xl bg-slate-50 border"></div>
-     <div class="grid grid-cols-2 gap-2"><button onclick="openMove()" class="b b7 col-span-2 !bg-amber-100 !text-amber-900 border border-amber-300"><i class="fas fa-right-left"></i> Nhập nhầm kỳ? Chuyển nhiệm vụ sang kỳ khác</button><button onclick="previewDoc()" class="b b1"><i class="fas fa-eye"></i> Xem trước Phụ lục II</button><button onclick="downloadDoc()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục II (.doc)</button><button onclick="previewTc()" class="b b5"><i class="fas fa-eye"></i> Xem trước PL5/PL8</button><button id="btn-tc" onclick="downloadTcDocx()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục 5 (.docx)</button><button onclick="open02()" class="b b6"><i class="fas fa-pen-to-square"></i> <span id="btn-02e">Soạn Bản kiểm điểm 02B</span></button><button onclick="download02()" class="b b3"><i class="fas fa-file-word"></i> <span id="btn-02d">Tải Mẫu 02B (.docx)</span></button></div>
+     <div class="grid grid-cols-2 gap-2"><button onclick="openImport()" class="b b7 col-span-2 !bg-emerald-100 !text-emerald-900 border border-emerald-300"><i class="fas fa-file-import"></i> Nhập phiếu chấm điểm từ Excel (.xlsx)</button><input type="file" id="imp-file" accept=".xlsx" class="hide" onchange="onImportFile(this)"><button onclick="openMove()" class="b b7 col-span-2 !bg-amber-100 !text-amber-900 border border-amber-300"><i class="fas fa-right-left"></i> Nhập nhầm kỳ? Chuyển nhiệm vụ sang kỳ khác</button><button onclick="previewDoc()" class="b b1"><i class="fas fa-eye"></i> Xem trước Phụ lục II</button><button onclick="downloadDoc()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục II (.doc)</button><button onclick="previewTc()" class="b b5"><i class="fas fa-eye"></i> Xem trước PL5/PL8</button><button id="btn-tc" onclick="downloadTcDocx()" class="b b2"><i class="fas fa-file-word"></i> Tải Phụ lục 5 (.docx)</button><button onclick="open02()" class="b b6"><i class="fas fa-pen-to-square"></i> <span id="btn-02e">Soạn Bản kiểm điểm 02B</span></button><button onclick="download02()" class="b b3"><i class="fas fa-file-word"></i> <span id="btn-02d">Tải Mẫu 02B (.docx)</span></button></div>
     </div>
     <div class="card p-6 flex flex-col lg:col-span-2">
      <p class="text-[11px] font-bold text-slate-400 uppercase text-center tracking-widest">Mức xếp loại tự đề xuất</p>
@@ -235,7 +235,7 @@ tbody tr:hover td{background:#f8fbff}
  <footer class="hdr text-white py-2 px-4 text-center flex-shrink-0 text-xs font-semibold space-y-0.5">
   <div>TRƯỜNG PTDTNT THCS VÀ THPT ĐẮK SONG - KỶ CƯƠNG - NỀN NẾP - DẠY TỐT - HỌC TỐT</div>
   <div class="text-[11px] text-sky-200">Thôn 5 - xã Đức An - tỉnh Lâm Đồng</div>
-  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 5.0 (22/11/2026)</div>
+  <div class="text-[10px] text-sky-300 font-normal">@2026 bản quyền thuộc về thầy Nguyễn Văn Đạo - 0329833574 · Phiên bản 5.1 (22/11/2026)</div>
  </footer>
 </div>
 
@@ -1395,6 +1395,91 @@ function secDM(){const S=secStatus(),LD=S.filter(r=>r.lead),VC=S.filter(r=>!r.le
   +DX.tbl(rows,{w:[1.1,10.2,2,3.2],sz:12,hdr:1})+DX.p('__Lưu ý: Mẫu 6E1, 6E2, 6E3, 6E4 sử dụng nguyên tệp Excel do cơ quan có thẩm quyền ban hành. Hồ sơ gửi trước thời hạn theo Công văn số 6265/SGDĐT-TCCB.__',{sz:12,ind:0,bf:120})
   +DX.sign(`**NGƯỜI LẬP**\n\n\n\n\n**${me.fullName||''}**`,`**HIỆU TRƯỞNG**\n\n\n\n\n**${htName()}**`);
  secSaveDocx(body,'Danh_muc_ho_so_gui_TCCB');log('Thư ký tải văn bản','Danh mục hồ sơ')}
+
+/* ===== NHẬP PHIẾU CHẤM ĐIỂM KPI (PHỤ LỤC II) TỪ EXCEL .xlsx ===== */
+// Bộ đọc .xlsx tối giản: giải nén bằng DecompressionStream của trình duyệt, không cần thư viện ngoài
+const XR=(()=>{
+ const u16=(b,o)=>b[o]|(b[o+1]<<8),u32=(b,o)=>(b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24))>>>0;
+ async function inflate(d){const s=new Blob([d]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return new Uint8Array(await new Response(s).arrayBuffer())}
+ async function unzip(buf){const b=new Uint8Array(buf);let e=b.length-22;while(e>=0&&u32(b,e)!==0x06054b50)e--;if(e<0)throw new Error('Không phải file .xlsx hợp lệ');
+  const n=u16(b,e+10);let p=u32(b,e+16);const out={},dec=new TextDecoder();
+  for(let i=0;i<n;i++){const m=u16(b,p+10),cs=u32(b,p+20),nl=u16(b,p+28),xl=u16(b,p+30),cl=u16(b,p+32),lo=u32(b,p+42),name=dec.decode(b.subarray(p+46,p+46+nl));
+   const ds=lo+30+u16(b,lo+26)+u16(b,lo+28),raw=b.subarray(ds,ds+cs);out[name]={m,raw};p+=46+nl+xl+cl}
+  return{async text(nm){const f=out[nm];if(!f)return null;return dec.decode(f.m===0?f.raw:await inflate(f.raw))},names:Object.keys(out)}}
+ const ent=s=>s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n)).replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCharCode(parseInt(n,16))).replace(/&amp;/g,'&');
+ const tx=s=>{let r='';s.replace(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g,(_,t)=>{r+=t});return ent(r)};
+ async function read(buf){const z=await unzip(buf),wb=await z.text('xl/workbook.xml'),rels=await z.text('xl/_rels/workbook.xml.rels')||'';
+  if(!wb)throw new Error('Không đọc được nội dung bảng tính');
+  const sh=[...wb.matchAll(/<sheet\b[^>]*>/g)].map(m=>({name:ent((m[0].match(/name="([^"]*)"/)||[])[1]||''),rid:(m[0].match(/r:id="([^"]*)"/)||[])[1]}));
+  const tgt=rid=>{const r=[...rels.matchAll(/<Relationship\b[^>]*>/g)].map(x=>x[0]).find(x=>x.includes(`Id="${rid}"`));let t=r&&(r.match(/Target="([^"]*)"/)||[])[1]||'worksheets/sheet1.xml';t=t.replace(/^\/?xl\//,'').replace(/^\//,'');return'xl/'+t};
+  const ssx=await z.text('xl/sharedStrings.xml'),ss=ssx?[...ssx.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m=>tx(m[1])):[];
+  const sheets=[];for(const s of sh){const x=await z.text(tgt(s.rid));if(!x)continue;const cells={};
+   for(const m of x.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){const at=m[1],ref=(at.match(/\br="([A-Z]+\d+)"/)||[])[1];if(!ref)continue;const t=(at.match(/\bt="([^"]+)"/)||[])[1],body=m[2]||'';
+    let v=null;const vv=(body.match(/<v>([\s\S]*?)<\/v>/)||[])[1];
+    if(t==='s')v=vv!=null?ss[+vv]:null;else if(t==='inlineStr')v=tx(body);else if(t==='str'||t==='e')v=vv!=null?ent(vv):null;else if(t==='b')v=vv==='1';else if(vv!=null)v=+vv;
+    cells[ref]={v,f:/<f[\s>]/.test(body)}}
+   sheets.push({name:s.name,cells})}
+  return sheets}
+ return{read}})();
+
+const xlD=v=>{if(v==null||v==='')return'';if(typeof v==='number'&&v>20000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return d.toISOString().slice(0,10)}
+ const s=String(v).trim(),m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const i=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return i?i[0]:''};
+const noAcc=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/\s+/g,' ').trim();
+const RMAP={I:0,II:1,III:2,IV:3,V:4,VI:5};
+// Đọc phiếu theo cấu trúc Phụ lục II (HD 5142): cột B nhiệm vụ, C nhóm, D điểm, E sản phẩm, F số lượng, G thời hạn, I thực tế, K số lần sửa, M ngày hoàn thành, S ghi chú
+function parsePL2(sheet){const C=sheet.cells,g=(c,r)=>{const x=C[c+r];return x?x.v:null},mx=Math.max(...Object.keys(C).map(k=>+k.replace(/[A-Z]+/,'')));
+ const info={name:'',period:'',chung:null,tasks:[],warn:[]};let ax=-1,hdr=0;
+ for(let r=1;r<=mx;r++){const a=String(g('A',r)??'').trim(),b=String(g('B',r)??'').trim();
+  if(/^Họ và tên/i.test(a))info.name=String(g('E',r)||g('C',r)||g('B',r)||'').trim();
+  if(/PHIẾU CHẤM ĐIỂM KPI/i.test(a)){const m=a.match(/(QUÝ\s+[IV]+\s+NĂM\s+\d{4}|NĂM\s+\d{4})/i);if(m)info.period=m[1]}
+  if(/^Nhiệm vụ được giao/i.test(b))hdr=r;
+  const tm=a.match(/^TRỤC\s+(VI|IV|V|III|II|I)\b/i);if(tm){ax=RMAP[tm[1].toUpperCase()];continue}
+  if(/^Nhóm tiêu chí chung/i.test(a)){const v=g('I',r);if(typeof v==='number')info.chung=v}
+  if(/^Tổng điểm chuẩn/i.test(a)||/^II\.\s*TỔNG HỢP/i.test(a)){if(info.tasks.length)ax=-2}
+  if(!hdr||r<=hdr+2||ax<0||!b)continue;
+  const d=g('D',r),ct=String(g('C',r)||''),gm=ct.match(/Nhóm\s*([1-4])/i);let grp=gm?gm[1]:({100:'1',150:'2',200:'3',250:'4'})[d]||'';
+  if(!grp){info.warn.push(`Dòng ${r}: không xác định được nhóm – đặt Nhóm 1`);grp='1'}
+  let comp=g('I',r);comp=typeof comp==='number'?(comp<=1.5?Math.round(comp*100):Math.round(comp)):100;
+  const ec=g('K',r),q=g('F',r);
+  info.tasks.push({row:r,axis:ax,name:b,group:grp,product:String(g('E',r)||'').trim(),qty:q==null||q===''?'':String(q),deadline:xlD(g('G',r)),doneDate:xlD(g('M',r)),completion:Math.max(0,Math.min(100,comp)),errorCount:typeof ec==='number'?ec:0,note:String(g('S',r)||'').trim()})}
+ if(!hdr)throw new Error('Không tìm thấy bảng “Nhiệm vụ được giao”. File phải theo mẫu Phụ lục II (Phiếu chấm điểm KPI).');
+ return info}
+
+let impData=null;
+function canImport(){const self=viewUid===me.id,st=docInfo.status||'DRAFT';if(!viewUid||!cur.id||cur.status==='locked')return'Kỳ đánh giá đã khóa hoặc chưa chọn phiếu.';
+ if(st==='FINALIZED')return'Phiếu đã chốt, không nhập thêm được.';if(self&&st!=='DRAFT')return'Phiếu đã nộp; nhờ người duyệt trả lại để nhập.';
+ if(!self&&!(me.role==='bgh'||me.role==='admin'||(viewUser&&viewUser.managerId===me.id)))return'Bạn không có quyền nhập phiếu cho người này.';return''}
+function openImport(){const e=canImport();if(e)return toast(e,'warning');$('imp-file').value='';$('imp-file').click()}
+async function onImportFile(inp){const f=inp.files&&inp.files[0];if(!f)return;
+ if(!/\.xlsx$/i.test(f.name))return toast('Chỉ nhận file Excel .xlsx (nếu là .xls, mở bằng Excel rồi Lưu thành .xlsx).','warning');
+ try{const sh=await XR.read(await f.arrayBuffer());let info=null,err='';
+  for(const s of sh){try{info=parsePL2(s);if(info.tasks.length)break}catch(e){err=e.message}}
+  if(!info||!info.tasks.length)return toast(err||'Không tìm thấy nhiệm vụ nào trong file.','error');
+  impData={...info,file:f.name};impShow()}catch(e){console.error(e);toast('Không đọc được file: '+(e.message||e),'error')}}
+function impShow(){const D=impData,u=viewUser||me,ex=new Set(tasks.map(t=>noAcc(t.name)));
+ const nameOk=!D.name||noAcc(D.name)===noAcc(u.fullName),perOk=!D.period||noAcc(D.period)===noAcc(cur.name);
+ $('m02-title').textContent='NHẬP PHIẾU CHẤM ĐIỂM TỪ EXCEL';
+ $('m02-body').innerHTML=`<div class="text-sm space-y-1"><div>File: <b>${esc(D.file)}</b></div>
+  <div>Người trong file: <b>${esc(D.name||'(không ghi)')}</b> → nhập vào phiếu của <b>${esc(u.fullName||'')}</b> ${nameOk?'':'<span class="text-red-600 font-bold">⚠ Tên không khớp</span>'}</div>
+  <div>Kỳ trong file: <b>${esc(D.period||'(không ghi)')}</b> → kỳ đang chọn <b>${esc(cur.name||'')}</b> ${perOk?'':'<span class="text-red-600 font-bold">⚠ Kỳ không khớp</span>'}</div></div>
+  ${D.warn.length?`<div class="text-xs text-amber-700">${D.warn.map(esc).join('<br>')}</div>`:''}
+  <div class="flex gap-2 text-xs items-center"><button type="button" class="b b7 !py-1" onclick="document.querySelectorAll('.imp-c').forEach(c=>c.checked=true)">Chọn tất cả</button><button type="button" class="b b7 !py-1" onclick="document.querySelectorAll('.imp-c').forEach(c=>c.checked=false)">Bỏ chọn</button><span class="ml-auto font-bold">${D.tasks.length} nhiệm vụ trong file</span></div>
+  ${D.tasks.map((t,i)=>{const dup=ex.has(noAcc(t.name));return`<label class="flex gap-2 items-start bg-white border rounded-xl p-2 text-sm ${dup?'opacity-70':''}"><input type="checkbox" class="imp-c w-5 h-5 mt-0.5" value="${i}" ${dup?'':'checked'}><div><b>${esc(t.name)}</b> ${dup?'<span class="text-[10px] text-amber-700 font-bold">ĐÃ CÓ TRONG PHIẾU</span>':''}<div class="text-xs text-slate-500">Trục ${romanAx(t.axis)} · Nhóm ${t.group} · Hạn ${t.deadline?vd(t.deadline):'—'} · HT ${t.doneDate?vd(t.doneDate):'—'} · Thực tế ${t.completion}% · Sửa ${t.errorCount} lần</div></div></label>`}).join('')}
+  <label class="flex gap-2 items-start text-sm bg-red-50 border border-red-200 rounded-xl p-3"><input type="checkbox" id="imp-replace" class="w-5 h-5 mt-0.5"><span><b>Thay thế toàn bộ</b> ${tasks.length} nhiệm vụ đang có trong phiếu ${esc(cur.name||'')} bằng các nhiệm vụ được chọn (mặc định: chỉ thêm, bỏ qua nhiệm vụ trùng tên).</span></label>
+  ${D.chung!=null?`<label class="flex gap-2 items-start text-sm bg-sky-50 border border-sky-200 rounded-xl p-3"><input type="checkbox" id="imp-chung" class="w-5 h-5 mt-0.5" ${docInfo.tcItems||docInfo.tcMgr?'disabled':'checked'}><span>Cập nhật điểm tiêu chí chung tự chấm = <b>${nf(D.chung)}/30</b> theo file${docInfo.tcItems||docInfo.tcMgr?' <i>(phiếu đã chấm chi tiết từng tiêu chí trên phần mềm nên không ghi đè)</i>':''}.</span></label>`:''}`;
+ $('m02-save').classList.remove('hide');$('m02-save').onclick=doImport;$('m02').classList.remove('hide')}
+async function doImport(){const D=impData,sel=[...document.querySelectorAll('.imp-c')].filter(c=>c.checked).map(c=>D.tasks[+c.value]),rep=$('imp-replace')?.checked,ch=$('imp-chung')?.checked&&D.chung!=null;
+ if(!sel.length&&!ch)return toast('Chưa chọn nhiệm vụ nào.','warning');
+ if(rep&&!confirm(`Xóa ${tasks.length} nhiệm vụ hiện có và nhập ${sel.length} nhiệm vụ từ file?`))return;
+ const uid=viewUid,ex=new Set(rep?[]:tasks.map(t=>noAcc(t.name)));
+ try{const b=db.batch(),now=Date.now();let k=0;
+  if(rep)tasks.forEach(t=>b.delete(cref('kpi_tasks').doc(t.id)));
+  sel.forEach(t=>{if(ex.has(noAcc(t.name)))return;ex.add(noAcc(t.name));const c=CAT.find(x=>noAcc(x.n)===noAcc(t.name));
+   b.set(cref('kpi_tasks').doc(),mkTask(uid,{axis:t.axis,name:t.name,group:t.group,product:t.product,qty:t.qty,deadline:t.deadline,doneDate:t.doneDate,completion:t.completion,errorCount:t.errorCount,note:t.note,kpiCode:c?c.c:'',catGroup:c?c.g:'',importedFrom:D.file,createdAt:now+(k++)}))});
+  if(ch)b.set(kdoc(uid),{status:docInfo.status||'DRAFT',uid,periodId:cur.id,generalScore:D.chung,extraDeduct:0},{merge:true});
+  await b.commit();$('m02').classList.add('hide');$('m02-save').onclick=save02;
+  toast(`Đã nhập ${k} nhiệm vụ${ch?' và điểm tiêu chí chung':''}.`);try{log('Nhập phiếu chấm điểm từ Excel',`${(viewUser||me).fullName}: ${k} NV từ ${D.file}`)}catch(x){console.error(x)}}
+ catch(e){wErr('Không nhập được phiếu',e)}}
 
 /* ===== IMPORT HÀNG LOẠT ===== */
 function downloadUserTemplate(){saveFile("Họ và tên,Chức vụ,Vai trò,Tổ chuyên môn,Người quản lý trực tiếp\nNguyễn Trường Sinh,Tổ trưởng,tt,Tổ Khoa học Tự nhiên,\nNguyễn Văn A,Giáo viên,gv,Tổ Khoa học Tự nhiên,Nguyễn Trường Sinh",'text/csv;charset=utf-8;','Mau_Import_NhanSu.csv')}
